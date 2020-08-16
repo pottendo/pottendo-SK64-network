@@ -29,6 +29,10 @@
 */
 #include "kernel_launch.h"
 
+#ifdef WITH_NET
+extern CSidekickNet * pSidekickNet;
+#endif
+
 // we will read this .PRG file
 static const char DRIVE[] = "SD:";
 #ifndef COMPILE_MENU
@@ -258,6 +262,9 @@ void CKernelLaunch::Run( void )
 
 	nBytesRead = 0; stage = 1;
 	u32 cycleCountC64_Stage1 = 0;
+	#ifdef WITH_NET		
+	unsigned netDelay = 90000000;
+	#endif
 
 	// wait forever
 	while ( true )
@@ -295,6 +302,23 @@ void CKernelLaunch::Run( void )
 		#endif
 
 		asm volatile ("wfi");
+
+		#ifdef WITH_NET		
+		netDelay--;
+		if (netDelay == 0 )
+		{
+			netDelay = 30;
+			m_InputPin.DisableInterrupt();
+			m_InputPin.DisconnectInterrupt();
+			EnableIRQs();
+			//pSidekickNet->updateSystemMonitor( m_Memory.GetHeapFreeSpace(HEAP_ANY), m_CPUThrottle.GetTemperature());
+			pSidekickNet->handleQueuedNetworkAction();
+			DisableIRQs();
+			m_InputPin.ConnectInterrupt( FIQ_HANDLER, FIQ_PARENT );
+			m_InputPin.EnableInterrupt( GPIOInterruptOnRisingEdge );
+		}
+		#endif
+		
 	}
 
 	// and we'll never reach this...
@@ -503,4 +527,3 @@ void CKernelLaunch::FIQHandler (void *pParam)
 
 	OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
 }
-
