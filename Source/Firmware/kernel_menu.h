@@ -141,6 +141,7 @@ public:
 	boolean Initialize( void );
 
 	void Run( void );
+	void updateSystemMonitor();
 
 private:
 	static void FIQHandler( void *pParam );
