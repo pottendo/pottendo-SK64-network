@@ -136,6 +136,7 @@ int extraMsg = 0;
 #ifdef WITH_NET
 #define MENU_NETWORK 0x04
 #define MENU_SKTX 0x05
+#define MENU_SYSTEMINFO 0x06
 #endif
 
 u32 menuScreen = 0, 
@@ -1807,6 +1808,15 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 				return;
 			}
 		}
+		else if ( k == 's' || k == 'S')
+		{
+			//if (pSidekickNet->IsRunning())
+			{
+				menuScreen = MENU_SYSTEMINFO;
+				handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal, menuItemStr );
+				return;
+			}
+		}
 		else if ( k == 'c' || k == 'C')
 		{
 			if (!pSidekickNet->IsRunning())
@@ -1868,6 +1878,15 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			//and it is not the pound key which is reserved to enable
 			//constant screen refresh
 			pSidekickNet->queueSktxKeypress(k);
+		}
+	} else
+	if ( menuScreen == MENU_SYSTEMINFO )
+	{
+		if ( k == VK_F7)
+		{
+			menuScreen = MENU_MAIN;
+			handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal, menuItemStr );
+			return;
 		}
 	} else
 #endif		
@@ -2290,6 +2309,7 @@ void printNetworkScreen()
 	u32 y1 = 2;
 
 	printC64( x+1, y1+2, "Network settings", skinValues.SKIN_MENU_TEXT_HEADER, 0 );
+	printC64( x+1, y1+8, "Press >S< to display system infos", skinValues.SKIN_MENU_TEXT_HEADER, 0 );	
 	if ( pSidekickNet->IsRunning() )
 	{
 		printC64( x+1, y1+3, strIpAddress,   skinValues.SKIN_MENU_TEXT_ITEM, 0 );
@@ -2638,6 +2658,10 @@ void renderC64()
 	if ( menuScreen == MENU_SKTX )
 	{
 		printSKTXScreen();
+	}
+	if ( menuScreen == MENU_SYSTEMINFO )
+	{
+		printSystemInfoScreen();
 	}
 #endif	
 	//if ( menuScreen == MENU_ERROR )
