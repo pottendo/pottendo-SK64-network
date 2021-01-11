@@ -1802,6 +1802,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 		{
 			if (pSidekickNet->IsRunning())
 			{
+				pSidekickNet->enteringSktpScreen();
 				pSidekickNet->redrawSktpScreen();
 				menuScreen = MENU_SKTP;
 				handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal, menuItemStr );
@@ -1849,6 +1850,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 	
 		if ( k == VK_F7 || k == VK_F6 )
 		{
+			pSidekickNet->leavingSktpScreen();
 			menuScreen = MENU_MAIN;
 			handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal, menuItemStr );
 			return;
@@ -1865,18 +1867,18 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 				//this assignment is a cheap trick to get rid of error popups
 				if ( errorMsg != NULL ) errorMsg = NULL;
 		}
+		/*
 		else if (k == 92 )
 		{
 			//92 is pound key, this key is constantly sent by the rpimenu_net.prg
 			//automatically if the user doesn't press a key on the Commodore keyboard
-			pSidekickNet->queueSktpRefresh(); 
+			pSidekickNet->queueSktpRefresh(0); 
 			
 		}
+		*/
 		else
 		{
 			//the user has actually manually pressed a key on the Commodore keyboard
-			//and it is not the pound key which is reserved to enable
-			//constant screen refresh
 			pSidekickNet->queueSktpKeypress(k);
 		}
 	} else
