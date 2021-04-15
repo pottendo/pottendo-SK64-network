@@ -1837,6 +1837,23 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 				setErrorMsg( pSidekickNet->getNetworkActionStatusMessage() );
 			}
 		}
+		else if ( k == 't' || k == 'T')
+		{
+			if (pSidekickNet->IsRunning())
+			{
+				if ( pSidekickNet->getModemEmuType() == 1)
+				{
+					if (pSidekickNet->isUsbUserportModemConnected())
+						pSidekickNet->setModemEmuType(2);
+					else
+						pSidekickNet->setModemEmuType(0);
+				}
+				else if ( pSidekickNet->getModemEmuType() == 2)
+					pSidekickNet->setModemEmuType(0);
+				else if ( pSidekickNet->getModemEmuType() == 0)
+					pSidekickNet->setModemEmuType(1);
+			}
+		}
 		/*
 		else if ( k == 'q' || k == 'Q')
 		{
@@ -2291,7 +2308,7 @@ void printNetworkScreen()
 	CString strHostName   = "Hostname:           ";
 	CString strConnection = "Connection state:   ";
 	CString strWebserver  = "Webserver state:    ";
-	CString strUPModemEmu = "Userport modem emu: ";
+	CString strUPModemEmu = "Modem emulation (T):";
 	CString strHelper;
 	
 	if (strcmp(netSidekickHostname,"") != 0)
@@ -2310,10 +2327,12 @@ void printNetworkScreen()
 	if ( pSidekickNet->IsRunning() )
 	{
 		strConnection.Append( "Active" );
-		if ( pSidekickNet->isUsbUserportModemEmulationActive() )
-			strUPModemEmu.Append( "Active" );
+		if ( pSidekickNet->isUsbUserportModemConnected() && pSidekickNet->getModemEmuType() == 2)
+			strUPModemEmu.Append( "Userport" );
+	  else if ( pSidekickNet->getModemEmuType() == 1 )
+			strUPModemEmu.Append( "Swiftlink" );
 		else
-			strUPModemEmu.Append( "No cable detected" );
+			strUPModemEmu.Append( "None" );
 	}
 	else
 	{
