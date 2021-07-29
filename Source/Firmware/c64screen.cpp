@@ -1843,9 +1843,11 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			{
 				if ( pSidekickNet->getModemEmuType() == 1)
 				{
+					#ifdef WITH_USB_SERIAL
 					if (pSidekickNet->isUsbUserportModemConnected())
 						pSidekickNet->setModemEmuType(2);
 					else
+					#endif
 						pSidekickNet->setModemEmuType(0);
 				}
 				else if ( pSidekickNet->getModemEmuType() == 2)
@@ -2327,9 +2329,12 @@ void printNetworkScreen()
 	if ( pSidekickNet->IsRunning() )
 	{
 		strConnection.Append( "Active" );
+		#ifdef WITH_USB_SERIAL
 		if ( pSidekickNet->isUsbUserportModemConnected() && pSidekickNet->getModemEmuType() == 2)
 			strUPModemEmu.Append( "Userport" );
-	  else if ( pSidekickNet->getModemEmuType() == 1 )
+	  else 
+		#endif
+		if ( pSidekickNet->getModemEmuType() == 1 )
 			strUPModemEmu.Append( "Swiftlink" );
 		else
 			strUPModemEmu.Append( "None" );
