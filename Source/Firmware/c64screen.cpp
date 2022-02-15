@@ -668,14 +668,17 @@ void snapJoy( int dir )
 
 int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME )
 {
-	FATFS m_FileSystem;
 
+#ifndef WITH_NET
+
+	FATFS m_FileSystem;
 	// mount file system
 	if ( f_mount( &m_FileSystem, DRIVE, 1 ) != FR_OK )
 	{
 		//logger->Write( "fe", LogNotice, "Cannot mount drive: %s", DRIVE );
 		return -1;
 	}
+#endif
 
 	// get filesize
 	FILINFO info;
@@ -686,7 +689,9 @@ int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME )
 	result = f_open( &file, FILENAME, FA_READ | FA_OPEN_EXISTING );
 	if ( result != FR_OK )
 	{
+#ifndef WITH_NET		
 		f_mount( 0, DRIVE, 0 );
+#endif
 		//logger->Write( "fe", LogNotice, "Cannot open file: %s", FILENAME );
 		return -2;
 	}
@@ -697,13 +702,14 @@ int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME )
 		return -5;
 	}
 
+#ifndef WITH_NET
 	// unmount file system
 	if ( f_mount( 0, DRIVE, 0 ) != FR_OK )
 	{
 		//logger->Write( "fe", LogNotice, "Cannot unmount drive: %s", DRIVE );
 		return -6;
 	}
-
+#endif
 	return 1;
 }
 
@@ -1876,14 +1882,21 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			pSidekickNet->leavingSktpScreen();
 			menuScreen = MENU_MAIN;
 			handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal, menuItemStr );
+			//trying to put the colors back to black
+			injectPOKE( 53280, 0); //skinValues.SKIN_MENU_BORDER_COLOR );
+			injectPOKE( 53281, 0); //skinValues.SKIN_MENU_BACKGROUND_COLOR );
 			return;
 		}
-		else
+		else if ( k != 0 )
 		{
 			//the user has actually manually pressed a key on the Commodore keyboard
 			//or caused a joystick event
 			pSidekickNet->queueSktpKeypress(k);
-		}
+		}/*
+		else if (k == 0 && pSidekickNet->isSKTPRefreshWaiting())
+		{
+			isAnyNetworkActionQueued()
+		}*/
 	} else
 	if ( menuScreen == MENU_SYSTEMINFO )
 	{
@@ -2391,8 +2404,8 @@ void printNetworkScreen()
 	printSidekickLogo();
 
 	startInjectCode();
-	injectPOKE( 53280, skinValues.SKIN_MENU_BORDER_COLOR );
-	injectPOKE( 53281, skinValues.SKIN_MENU_BACKGROUND_COLOR );
+	//injectPOKE( 53280, skinValues.SKIN_MENU_BORDER_COLOR );
+	//injectPOKE( 53281, skinValues.SKIN_MENU_BACKGROUND_COLOR );
 	if ( skinFontLoaded )
 		injectPOKE( 53272, 30 ); else
 		injectPOKE( 53272, 23 ); 	
@@ -2467,8 +2480,8 @@ void printSystemInfoScreen()
 	printSidekickLogo();
 
 	startInjectCode();
-	injectPOKE( 53280, skinValues.SKIN_MENU_BORDER_COLOR );
-	injectPOKE( 53281, skinValues.SKIN_MENU_BACKGROUND_COLOR );
+	//injectPOKE( 53280, skinValues.SKIN_MENU_BORDER_COLOR );
+	//injectPOKE( 53281, skinValues.SKIN_MENU_BACKGROUND_COLOR );
 	if ( skinFontLoaded )
 		injectPOKE( 53272, 30 ); else
 		injectPOKE( 53272, 23 ); 	
@@ -2534,7 +2547,7 @@ void printSKTPScreen()
 					1 char repeat chunk
 					2 screencode chunk
 					3 meta screen refresh
-					4 colors & charset
+					4 colors (border, background) & charset
 					5 vertical repeat chunk
 					6 paintbrush chunk
 					7 tga image file url/name to be shown on color tft display
@@ -2591,6 +2604,7 @@ void printSKTPScreen()
 	injectPOKE( 53280, SKTPborderColor); //skinValues.SKIN_MENU_BORDER_COLOR );
 	injectPOKE( 53281, SKTPbgColor); //skinValues.SKIN_MENU_BACKGROUND_COLOR );
 	injectPOKE( 53272, 21 + (SKTPisLowerCharset ? 2 : 0) ); // use normal c64 font
+	c64screenUppercase = SKTPisLowerCharset ? 0:1;
 }
 	
 #endif
@@ -2818,6 +2832,7 @@ void renderC64()
 	}
 	if ( menuScreen == MENU_SKTP )
 	{
+		showLogo = 0;
 		printSKTPScreen();
 	}
 	if ( menuScreen == MENU_SYSTEMINFO )
