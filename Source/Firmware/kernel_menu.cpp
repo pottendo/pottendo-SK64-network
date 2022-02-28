@@ -448,7 +448,7 @@ boolean CKernelMenu::Initialize( void )
 
 	globalMemoryAllocation();
 
-	#ifdef WITH_NET
+  #ifdef WITH_NET
 		logger->Write ("SidekickKernel", LogNotice, "Compiled on: " COMPILE_TIME ", Git branch: " GIT_BRANCH ", Git hash: " GIT_HASH);
 		//TODO: this should be done in constructor of SideKickNet
 		m_SidekickNet.checkForSupportedPiModel();
@@ -1257,10 +1257,17 @@ void CKernelMenu::Run( void )
 			}
 
 #ifdef WITH_NET
+			boolean isFirstSKTPScreen = false;
 			if (!m_SidekickNet.isSKTPScreenActive())
 				convertScreenToBitmap( framebuffer );
 			else
-				memset( bitmap, 0, 64 * 64 );
+			{
+				isFirstSKTPScreen = m_SidekickNet.isFirstSKTPScreen();
+				if (isFirstSKTPScreen){
+					memset( bitmap, 0, 64 * 64 );
+					//showAnimation = false;
+				}
+			}
 #else
 			convertScreenToBitmap( framebuffer );
 #endif
@@ -1269,10 +1276,10 @@ void CKernelMenu::Run( void )
 			{
 				ctn++;
 #ifdef WITH_NET
-				if ( currentVDCMode == 1 || m_SidekickNet.isSKTPScreenActive())
-#else			
+				if ( m_SidekickNet.isSKTPScreenActive()){}
+				else
+#endif
 				if ( currentVDCMode == 1 )
-#endif				
 				{
 					memset( bitmap, 0, 64 * 64 );
 				} else
@@ -1698,7 +1705,11 @@ void CKernelMenu::Run( void )
 			nBytesToTransfer = 7 * 8 * 64;
 
 			// transfer animation only if VIC-output is active
+#ifdef WITH_NET
+			if ( currentVDCMode < 2 || isFirstSKTPScreen)
+#else
 			if ( currentVDCMode < 2)
+#endif
 			while ( nBytesToTransfer > 0 ) 
 			{
 				nBytesToTransfer --;
