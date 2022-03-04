@@ -1860,7 +1860,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			{
 				if ( pSidekickNet->getModemEmuType() == 1)
 				{
-					#ifdef WITH_USB_SERIAL
+					#ifdef WITH_CIRCLE_AS_OF_STEP_42
 					if (pSidekickNet->isUsbUserportModemConnected())
 						pSidekickNet->setModemEmuType(2);
 					else
@@ -2326,7 +2326,7 @@ void printNetworkScreen()
 	if ( pSidekickNet->IsRunning() )
 	{
 		strConnection.Append( "Active" );
-		#ifdef WITH_USB_SERIAL
+		#ifdef WITH_CIRCLE_AS_OF_STEP_42
 		if ( pSidekickNet->isUsbUserportModemConnected() && pSidekickNet->getModemEmuType() == 2)
 			strModemEmu.Append( "Userport" );
 	  else 
