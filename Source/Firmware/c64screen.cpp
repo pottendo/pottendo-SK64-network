@@ -1873,6 +1873,15 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 					pSidekickNet->setModemEmuType(1);
 			}
 		}
+		else if ( k == 'b' || k == 'B')
+		{
+			if (pSidekickNet->IsRunning())
+			{
+				//if ( pSidekickNet->getModemEmuType() == 1)
+				//	if (pSidekickNet->isUsbUserportModemConnected())
+				pSidekickNet->iterateModemEmuBaudrate();
+			}
+		}
 	} else
 	if ( menuScreen == MENU_SKTP )
 	{
@@ -2307,7 +2316,7 @@ void printNetworkScreen()
 	CString strConnection = "Connection state:   ";
 	CString strWebserver  = "Webserver state:    ";
 	CString strModemEmu   = "Modem emulation (M):";
-	CString strModemBaudR = "Default baud rate:  ";
+	CString strModemBaudR = "Baud rate       (B):";
 	CString strHelper;
 	
 	if (strcmp(netSidekickHostname,"") != 0)
