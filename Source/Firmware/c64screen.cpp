@@ -1812,7 +1812,6 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 						prgSizeLaunch = psid64->m_programSize;
 
 						delete psid64;
-
 						*launchKernel = 41; 
 					}
 					return;
@@ -1870,7 +1869,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			{
 				if ( pSidekickNet->getModemEmuType() == 1)
 				{
-					#ifdef WITH_CIRCLE_AS_OF_STEP_42
+					#ifdef WITH_CIRCLE_AS_OF_STEP_44
 					if (pSidekickNet->isUsbUserportModemConnected())
 						pSidekickNet->setModemEmuType(2);
 					else
@@ -2345,7 +2344,7 @@ void printNetworkScreen()
 	if ( pSidekickNet->IsRunning() )
 	{
 		strConnection.Append( "Active" );
-		#ifdef WITH_CIRCLE_AS_OF_STEP_42
+		#ifdef WITH_CIRCLE_AS_OF_STEP_44
 		if ( pSidekickNet->isUsbUserportModemConnected() && pSidekickNet->getModemEmuType() == 2)
 			strModemEmu.Append( "Userport" );
 	  else 
@@ -2620,6 +2619,12 @@ void printSKTPScreen()
 						pSidekickNet->prepareDownloadOfTGAImage();
 					else if (type == 8)
 						pSidekickNet->updateTGAImageFromSKTPChunk();
+					else if (type == 88)
+					{
+						//silently ignore
+						//logger->Write( "printSKTPScreen", LogWarning, "magic 88");
+						break;
+					}
 					else if (type == 255)
 					{
 						logger->Write( "printSKTPScreen", LogWarning, "end of sktp response was reached");
@@ -2870,7 +2875,7 @@ void renderC64()
 	}
 	if ( menuScreen == MENU_SKTP )
 	{
-		showLogo = 0;
+		showLogo = 0; //this is the sidekick char/sprite logo in the upper right corner
 		printSKTPScreen();
 	}
 	if ( menuScreen == MENU_SYSTEMINFO )
