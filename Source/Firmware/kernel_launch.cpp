@@ -175,19 +175,25 @@ void CKernelLaunch::Run( void )
 	} else
 	if ( screenType == 1 )
 	{
-		char fn[ 1024 ];//, fnslide[ 1024*2 ];
-		// attention: this assumes that the filename ending is always ".crt"!
-		memset( fn, 0, 1024 );
-
-		strncpy( fn, FILENAME, strlen( FILENAME ) - 4 );
-		strcat( fn, ".tga" );
-
-		logger->Write( "RaspiFlash", LogNotice, "trying to load: '%s'", fn );
-
-		if ( tftLoadBackgroundTGA( (char*)DRIVE, fn ) )
+		bool customTGA = false;
+		if (strlen( FILENAME ) > 4 && !_playingPSID)
 		{
-			tftCopyBackground2Framebuffer();
-		} else
+			char fn[ 1024 ];//, fnslide[ 1024*2 ];
+			// attention: this assumes that the filename ending is always ".crt"!
+			memset( fn, 0, 1024 );
+
+			strncpy( fn, FILENAME, strlen( FILENAME ) - 4 );
+			strcat( fn, ".tga" );
+
+			logger->Write( "RaspiFlash", LogNotice, "trying to load: '%s'", fn );
+
+			if ( tftLoadBackgroundTGA( (char*)DRIVE, fn ) )
+			{
+				tftCopyBackground2Framebuffer();
+				customTGA = true;
+			}
+		}
+		if (!customTGA)
 		{
 			tftLoadBackgroundTGA( DRIVE, FILENAME_SPLASH_RGB, 8 );
 
