@@ -42,7 +42,7 @@ static const char DRIVE[] = "SD:";
 //static const char FILENAME_PRG[]  = "SD:C64/rpimenu.prg";		// .PRG to start
 #ifdef WITH_NET
 
-unsigned delayHandleNetworkValue = 1500000;
+//unsigned delayHandleNetworkValue = 1500000;
 
 
 //static 
@@ -600,8 +600,12 @@ boolean CKernelMenu::Initialize( void )
 	memcpy( &cartMenu[ 0x1c10 ], col, 6 );
 
 	#ifdef WITH_NET
-		if (m_SidekickNet.usesWLAN())  
-			delayHandleNetworkValue = 1200000;
+		//default to cable based network on B models
+		//if ( m_SidekickNet.ConnectOnBoot() && !pSidekickNet->RaspiHasOnlyWLAN() && m_SidekickNet.usesWLAN())
+		//	m_SidekickNet.useLANInsteadOfWLAN();
+			
+//		if (m_SidekickNet.usesWLAN())
+//			delayHandleNetworkValue = 1200000;
 	
 		if ( m_SidekickNet.ConnectOnBoot() ){
 			boolean bNetOK = bOK ? m_SidekickNet.Initialize() : false;
@@ -964,7 +968,8 @@ void CKernelMenu::Run( void )
 		m_InputPin.ConnectInterrupt( this->FIQHandler, this );
 		m_InputPin.EnableInterrupt( GPIOInterruptOnRisingEdge );
 		m_InputPin.EnableInterrupt2( GPIOInterruptOnFallingEdge );
-		EnableIRQs();
+//why is this enable irq here?
+//		EnableIRQs();
 
 		launchKernel = 0;
 
@@ -1110,6 +1115,12 @@ void CKernelMenu::Run( void )
 								postDelayFrame = 1;
 								screenFadeTasks = 0;
 							}
+							#ifdef WITH_NET
+							if (m_SidekickNet.isSKTPScreenActive()){
+								m_SidekickNet.redrawSktpScreen();
+								m_SidekickNet.queueSktpKeypress(0);
+							}
+							#endif
 						}
 						swapColorProfile = 0;
 					}
@@ -1148,6 +1159,12 @@ void CKernelMenu::Run( void )
 					postDelayTicks = 6*FADE_SLOWER;
 					postDelayFrame = 1;
 					swapColorProfile = 0;
+					#ifdef WITH_NET
+					if (m_SidekickNet.isSKTPScreenActive()){
+						m_SidekickNet.redrawSktpScreen();
+						m_SidekickNet.queueSktpKeypress(0);
+					}
+					#endif
 				}
 			}
 			if ( lastChar == 2 )
@@ -1204,12 +1221,7 @@ void CKernelMenu::Run( void )
 
 			startForC128 = 0;
 #ifdef WITH_NET
-			//disable queued screenrefreshs
-			if (m_SidekickNet.isSKTPRefreshWaiting()) 
-				m_SidekickNet.cancelSKTPRefresh();
 			handleNetwork( true );
-			//lastAutoRefresh = 0;
-			
 			//handleC64 - processes the key the user has pressed to determine how 
 			//the screen has to change (e.g. jump from page a to page b)
 #else
@@ -1845,8 +1857,6 @@ void CKernelMenu::Run( void )
 				if (updateMenu == 0 && m_SidekickNet.isMenuScreenUpdateNeeded())
 				{
 					handleNetwork(false);
-					
-					
 					//we never end up in here for a sktp timed screen refresh
 					DisableFIQInterrupt();
 					doneWithHandling = 0;
@@ -1864,7 +1874,6 @@ void CKernelMenu::Run( void )
 						doneWithHandling = 1;
 						updateMenu = 0;
 					}
-				
 				}
 #endif
 
