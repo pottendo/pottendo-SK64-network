@@ -2358,8 +2358,7 @@ void printNetworkScreen()
 		strConnection.Append( "Active" );
 		if ( pSidekickNet->isUsbUserportModemConnected() && pSidekickNet->getModemEmuType() == 2)
 			strModemEmu.Append( "Userport" );
-	  else 
-		if ( pSidekickNet->getModemEmuType() == 1 )
+		else if ( pSidekickNet->getModemEmuType() == 1 )
 			strModemEmu.Append( "Swiftlink" );
 		else
 			strModemEmu.Append( "None" );
