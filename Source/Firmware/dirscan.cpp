@@ -383,15 +383,15 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 					nAdditionalEntries ++;
 				} else
 				{
-					if ( ( ( strstr( FileInfo.fname, ".crt" ) > 0 || strstr( FileInfo.fname, ".CRT" ) ) && strstr( FileInfo.fname, ".eeprom" ) == 0 ) ||
-						 strstr( FileInfo.fname, ".georam" ) > 0 || strstr( FileInfo.fname, ".GEORAM" ) > 0 || 
-						 strstr( FileInfo.fname, ".prg" ) > 0 || strstr( FileInfo.fname, ".PRG" ) > 0 || 
-						 strstr( FileInfo.fname, ".sid" ) > 0 || strstr( FileInfo.fname, ".SID" ) > 0 || 
-						 strstr( FileInfo.fname, ".bin" ) > 0 || strstr( FileInfo.fname, ".BIN" ) > 0 ||
-						 strstr( FileInfo.fname, ".mod" ) > 0 || strstr( FileInfo.fname, ".MOD" ) > 0 ||
-						 strstr( FileInfo.fname, ".wav" ) > 0 || strstr( FileInfo.fname, ".WAV" ) > 0 ||
-						 strstr( FileInfo.fname, ".ym" ) > 0 || strstr( FileInfo.fname, ".YM" ) > 0 ||
-						 strstr( FileInfo.fname, ".rom" ) > 0 || strstr( FileInfo.fname, ".ROM" ) > 0 )
+					if ( ( ( strstr( FileInfo.fname, ".crt" ) != NULL || strstr( FileInfo.fname, ".CRT" ) != NULL ) && strstr( FileInfo.fname, ".eeprom" ) == NULL ) ||
+						 strstr( FileInfo.fname, ".georam" ) != NULL || strstr( FileInfo.fname, ".GEORAM" ) != NULL || 
+						 strstr( FileInfo.fname, ".prg" ) != NULL || strstr( FileInfo.fname, ".PRG" ) != NULL || 
+						 strstr( FileInfo.fname, ".sid" ) != NULL || strstr( FileInfo.fname, ".SID" ) != NULL || 
+						 strstr( FileInfo.fname, ".bin" ) != NULL || strstr( FileInfo.fname, ".BIN" ) != NULL ||
+						 strstr( FileInfo.fname, ".mod" ) != NULL || strstr( FileInfo.fname, ".MOD" ) != NULL ||
+						 strstr( FileInfo.fname, ".wav" ) != NULL || strstr( FileInfo.fname, ".WAV" ) != NULL ||
+						 strstr( FileInfo.fname, ".ym" )  != NULL || strstr( FileInfo.fname, ".YM" )  != NULL ||
+						 strstr( FileInfo.fname, ".rom" ) != NULL || strstr( FileInfo.fname, ".ROM" ) != NULL )
 					{
 						strcpy( (char*)sort[sortCur].name, FileInfo.fname );
 						sort[ sortCur ].level = FileInfo.fattrib;
@@ -400,8 +400,8 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 						nAdditionalEntries ++;
 					}
 
-					if ( strstr( FileInfo.fname, ".d64" ) > 0 || strstr( FileInfo.fname, ".D64" ) > 0 || 
-						 strstr( FileInfo.fname, ".d71" ) > 0 || strstr( FileInfo.fname, ".D71" ) > 0 )
+					if ( strstr( FileInfo.fname, ".d64" ) != NULL || strstr( FileInfo.fname, ".D64" ) != NULL || 
+						 strstr( FileInfo.fname, ".d71" ) != NULL || strstr( FileInfo.fname, ".D71" ) != NULL )
 					{
 						strcpy( (char*)sort[sortCur].name, FileInfo.fname );
 						sort[ sortCur ].level = FileInfo.fattrib;
@@ -490,8 +490,8 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 			//strcpy( (char*)d[*n].name, (char*)sort[ pos ].name );
 			memcpy( (char*)d[*n].name, (char*)sort[ pos ].name, 256 );
 
-			if ( strstr( (char*)sort[ pos ].name, ".d64" ) > 0 || strstr( (char*)sort[ pos ].name, ".D64" ) > 0 ||
-			 	 strstr( (char*)sort[ pos ].name, ".d71" ) > 0 || strstr( (char*)sort[ pos ].name, ".D71" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".d64" ) != NULL || strstr( (char*)sort[ pos ].name, ".D64" ) != NULL ||
+			 	 strstr( (char*)sort[ pos ].name, ".d71" ) != NULL || strstr( (char*)sort[ pos ].name, ".D71" ) != NULL )
 			{
 				strcpy( temp, DIRPATH );
 				strcat( temp, "\\" );
@@ -532,7 +532,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 
 			} else
 			#ifndef SIDEKICK20
-			if ( strstr( (char*)DIRPATH, "KERNAL" ) > 0  )
+			if ( strstr( (char*)DIRPATH, "KERNAL" ) != NULL  )
 			{
 				//logger->Write( "RaspiMenu", LogNotice, "-> found kernal %s", sort[ pos ].name );
 				d[ *n ].f = DIR_KERNAL_FILE;
@@ -541,7 +541,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 				( *n )++;
 			} else 
 			#endif
-			if ( strstr( (char*)sort[ pos ].name, ".crt" ) > 0 || strstr( (char*)sort[ pos ].name, ".CRT" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".crt" ) != NULL || strstr( (char*)sort[ pos ].name, ".CRT" ) != NULL )
 			{
 				#ifdef SIDEKICK20
 				strcpy( temp, DIRPATH );
@@ -554,7 +554,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 				( *n )++;
 			} else 
 			#ifndef SIDEKICK20
-			if ( strstr( (char*)sort[ pos ].name, ".georam" ) > 0 || strstr( (char*)sort[ pos ].name, ".GEORAM" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".georam" ) != NULL || strstr( (char*)sort[ pos ].name, ".GEORAM" ) != NULL )
 			{
 				d[ *n ].f = DIR_CRT_FILE;
 				d[ *n ].parent = parent;
@@ -562,7 +562,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 				( *n )++;
 			} else
 			#endif
-			if ( strstr( (char*)sort[ pos ].name, ".prg" ) > 0 || strstr( (char*)sort[ pos ].name, ".PRG" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".prg" ) != NULL || strstr( (char*)sort[ pos ].name, ".PRG" ) != NULL )
 			{
 			#ifdef SIDEKICK20
 				u32 addr;
@@ -587,30 +587,30 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 			#endif
 			} 
 			#ifndef SIDEKICK20
-			else if ( strstr( (char*)sort[ pos ].name, ".sid" ) > 0 || strstr( (char*)sort[ pos ].name, ".SID" ) > 0 )
+			else if ( strstr( (char*)sort[ pos ].name, ".sid" ) != NULL || strstr( (char*)sort[ pos ].name, ".SID" ) != NULL )
 			{
 				d[ *n ].f = DIR_SID_FILE;
 				d[ *n ].parent = parent;
 				d[ *n ].level = level;
 				( *n )++;
 			} else
-			if ( strstr( (char*)sort[ pos ].name, ".bin" ) > 0 || strstr( (char*)sort[ pos ].name, ".BIN" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".bin" ) != NULL || strstr( (char*)sort[ pos ].name, ".BIN" ) != NULL )
 			{
 				d[ *n ].f = DIR_BIN_FILE;
 				d[ *n ].parent = parent;
 				d[ *n ].level = level;
 				( *n )++;
 			} else
-			if ( strstr( (char*)sort[ pos ].name, ".mod" ) > 0 || strstr( (char*)sort[ pos ].name, ".MOD" ) > 0 || 
-				 strstr( (char*)sort[ pos ].name, ".wav" ) > 0 || strstr( (char*)sort[ pos ].name, ".WAV" ) > 0 || 
-				 strstr( (char*)sort[ pos ].name, ".ym" ) > 0 || strstr( (char*)sort[ pos ].name, ".YM" ) > 0 )
+			if ( strstr( (char*)sort[ pos ].name, ".mod" ) != NULL || strstr( (char*)sort[ pos ].name, ".MOD" ) != NULL || 
+				 strstr( (char*)sort[ pos ].name, ".wav" ) != NULL || strstr( (char*)sort[ pos ].name, ".WAV" ) != NULL || 
+				 strstr( (char*)sort[ pos ].name, ".ym" ) != NULL || strstr( (char*)sort[ pos ].name, ".YM" ) != NULL )
 			{
 				d[ *n ].f = DIR_MUSIC_FILE;
 				d[ *n ].parent = parent;
 				d[ *n ].level = level;
 				( *n )++;
 			} else
-			if ( strstr( (char*)sort[ pos ].name, ".rom" ) > 0 || strstr( (char*)sort[ pos ].name, ".ROM" ) > 0 || takeAll == 1 || (d[ parent ].f & DIR_LISTALL) )
+			if ( strstr( (char*)sort[ pos ].name, ".rom" ) != NULL || strstr( (char*)sort[ pos ].name, ".ROM" ) != NULL || takeAll == 1 || (d[ parent ].f & DIR_LISTALL) )
 			{
 				d[ *n ].f = DIR_CRT_FILE;
 				d[ *n ].parent = parent;
