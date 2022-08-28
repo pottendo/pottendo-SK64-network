@@ -14,7 +14,7 @@
 			- This part uses:
 			  + Pex 'Mahoney' Tufvesson sample playing technique and his lookup tables
 			  + PocketMOD by rombankzero (https://github.com/rombankzero/pocketmod)
-			  + STSound Library by Arnaud Carré (aka Leonard/Oxygene, https://github.com/arnaud-carre/StSound)
+			  + STSound Library by Arnaud Carre (aka Leonard/Oxygene, https://github.com/arnaud-carre/StSound)
 
  Copyright (c) 2019-2022 Carsten Dachsbacher <frenetic@dachsbacher.de>
 
@@ -877,12 +877,25 @@ void CKernelMODplay::Run( void )
 	{
 		mod_data = wavMemory;
 
-		getFileSize( logger, (char*)DRIVE, (char*)FILENAME, &size );
-		if ( size > (WAV_MEMSIZE_KB-256) * 1024 ) return;
+		#ifdef WITH_NET
+				//this is a hack for the network kernel to pass mod data over from memory
+				if ( prgSizeExt > 0 )
+				{
+					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
+					wavMemory = prgDataExt;
+					mod_size = prgSizeExt;
+				}
+				else
+				{
+		#endif
+					getFileSize( logger, (char*)DRIVE, (char*)FILENAME, &size );
+					if ( size > (WAV_MEMSIZE_KB-256) * 1024 ) return;
 
-		readFile( logger, (char*)DRIVE, (char*)FILENAME, wavMemory, &size );
-		mod_size = size;
-
+					readFile( logger, (char*)DRIVE, (char*)FILENAME, wavMemory, &size );
+					mod_size = size;
+		#ifdef WITH_NET
+				}
+		#endif
 
 		if (!pocketmod_init(&context, mod_data, mod_size, MOD_SCAN_sampleRate)) 
 		{
