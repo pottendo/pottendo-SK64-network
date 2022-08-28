@@ -41,7 +41,7 @@
 #include "YmTypes.h"
 #include "StSoundLibrary.h"
 #include "Ym2149Ex.h"
-#include "YmLoad.h"
+#include "Ymload.h"
 #include "digidrum.h"
 
 #define	MAX_DIGIDRUM	128
