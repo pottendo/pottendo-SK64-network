@@ -30,9 +30,6 @@
 #ifndef _kernel_h
 #define _kernel_h
 
-//#define WITH_NET_DEBUG
-
-
 #ifndef COMPILE_MENU_WITH_SOUND
 #define COMPILE_MENU_WITH_SOUND
 #endif
@@ -93,6 +90,7 @@ extern int screenType;
 #include "crt.h"
 
 #ifdef WITH_NET
+#define WITH_NET_DEBUG
 #include "net.h"
 #endif
 
