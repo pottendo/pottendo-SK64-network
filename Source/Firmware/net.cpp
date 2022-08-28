@@ -804,7 +804,11 @@ char * CSidekickNet::getCSDBDownloadFilename(){
 
 u8 CSidekickNet::getCSDBDownloadLaunchType(){
 	u8 type = 0;
-	if ( strcmp( m_CSDBDownloadExtension, "crt") == 0 )
+	if ( strcmp( m_CSDBDownloadExtension, "mod") == 0 )
+	{
+		type = 42;
+	}
+	else if ( strcmp( m_CSDBDownloadExtension, "crt") == 0 )
 	{
 		type = 99;
 		if (m_loglevel > 2)
@@ -1639,6 +1643,8 @@ void CSidekickNet::setSavePath(char * subfolder)
 #endif
 	else if ( strcmp(m_CSDBDownloadExtension,"sid") == 0)
 		savePath.Append( (const char *) "SID/" );
+	else if ( strcmp(m_CSDBDownloadExtension,"mod") == 0)
+		savePath.Append( (const char *) "MUSIC/MOD/" );
 	savePath.Append(subfolder);
 	
 	f_mkdir(savePath);
