@@ -454,7 +454,7 @@ boolean CKernelMenu::Initialize( void )
 		m_SidekickNet.mountSDDrive();
 #endif
 
-#ifndef WITH_NET
+#ifndef WITH_NET_DEBUG
 	extern u8 *flash_cacheoptimized_pool;
 	u8 *tempHDMI = flash_cacheoptimized_pool;
 	readFile( logger, (char*)DRIVE, (char*)FILENAME_SPLASH_HDMI, tempHDMI, &size );
@@ -2405,6 +2405,10 @@ int main( void )
 		case 44:
 		case 45:
 			KernelMODplayRun( kernel.m_InputPin, &kernel, FILENAME, false, prgDataLaunch, prgSizeLaunch, startForC128, playingPSID, launchKernel == 43 || launchKernel == 45, launchKernel > 43 ? 1 : 0 );
+			#ifdef WITH_NET
+			prgSizeLaunch = 0; //prevent double execute of the same data
+			FILENAME[0]		= 0;
+			#endif
 			CleanDataCache();
 			InvalidateDataCache();
 			InvalidateInstructionCache();
