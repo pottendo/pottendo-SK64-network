@@ -287,6 +287,8 @@ CHTTPDaemon *CWebServer::CreateWorker (CNetSubSystem *pNetSubSystem, CSocket *pS
 					strcmp (extension, "crt") == 0 ||
 					strcmp (extension, "sid") == 0 ||
 					strcmp (extension, "mod") == 0 ||
+					strcmp (extension, "wav") == 0 ||
+					strcmp (extension, "ym") == 0 ||
 					strcmp (extension, "bin") == 0) &&
 					strlen(filename)>0
 			){

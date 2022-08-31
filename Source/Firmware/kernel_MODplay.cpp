@@ -942,16 +942,44 @@ void CKernelMODplay::Run( void )
 	} else
 	if ( playFileType == 1 ) 
 	{
+		#ifdef WITH_NET
+				//this is a hack for the network kernel to pass mod data over from memory
+				if ( prgSizeExt > 0 )
+				{
+					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
+					wavMemory = prgDataExt;
+					mod_size = prgSizeExt;
+				}
+				else
+				{
+		#endif
 		getFileSize( logger, (char*)DRIVE, (char*)FILENAME, &size );
 		if ( size > (WAV_MEMSIZE_KB-256) * 1024 ) return;
 		readFile( logger, (char*)DRIVE, (char*)FILENAME, wavMemory, &size );
+		#ifdef WITH_NET
+				}
+		#endif
 		convertWAV2RAW_inplace( wavMemory );
 	} else
 	if ( playFileType == 2 )
 	{
+		#ifdef WITH_NET
+				//this is a hack for the network kernel to pass mod data over from memory
+				if ( prgSizeExt > 0 )
+				{
+					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
+					wavMemory = prgDataExt;
+					mod_size = prgSizeExt;
+				}
+				else
+				{
+		#endif		
 		getFileSize( logger, (char*)DRIVE, (char*)FILENAME, &size );
 		if ( size > (WAV_MEMSIZE_KB-256) * 1024 ) return;
 		readFile( logger, (char*)DRIVE, (char*)FILENAME, wavMemory, &size );
+		#ifdef WITH_NET
+				}
+		#endif
 		pMusic->loadMemory( wavMemory, size ); 
 		pMusic->setLoopMode( true );
 		pMusic->play();
