@@ -1166,6 +1166,21 @@ boolean CSidekickNet::checkForFinishedDownload()
 				setErrorMsgC64((char*)"             Saving SID file            ", false);
 //				setErrorMsgC64((char*)"     Saving and launching SID file      ");
 			}
+			else if ( strcmp( m_CSDBDownloadExtension, "mod" ) == 0)
+			{
+				//                    "012345678901234567890123456789012345XXXX"
+				setErrorMsgC64((char*)"             Saving MOD file            ", false);
+			}
+			else if ( strcmp( m_CSDBDownloadExtension, "ym" ) == 0)
+			{
+				//                    "012345678901234567890123456789012345XXXX"
+				setErrorMsgC64((char*)"             Saving YM file            ", false);
+			}
+			else if ( strcmp( m_CSDBDownloadExtension, "wav" ) == 0)
+			{
+				//                    "012345678901234567890123456789012345XXXX"
+				setErrorMsgC64((char*)"             Saving WAV file            ", false);
+			}
 			else if ( strcmp( m_CSDBDownloadExtension, "crt" ) == 0)
 			{
 				//                    "012345678901234567890123456789012345XXXX"
