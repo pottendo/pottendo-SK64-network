@@ -60,7 +60,7 @@ Currently the following network related features are offered by the experimental
 * Web interface
  	- Becomes available once the built-in web server is activated.
 	- Offers a file upload form allowing a Sidekick64 kernel update without removing the SD card.
-	- Also allows to upload, save and launch PRGs, SIDs, CRTs, D64, BIN files.
+	- Also allows to upload, save and launch PRGs, SIDs, CRTs, D64, BIN, MOD, YM, WAV files.
  	- Can be reached via the IP address or by hostname (default is "sidekick64" if no custom hostname was configured)
 * Modem emulation
 	- Only compatible with terminal software in PRG format (CCGMS, etc.)
@@ -82,22 +82,17 @@ Currently the following network related features are offered by the experimental
 * Outlook: Sidekick264 network support is also implemented in a highly experimental state. Due to the many variants that have to be tested Sidekick264 network has not been tested a lot.
 ## Quickstart
 
-1. Important: On the Sidekick64 PCB, set the jumper A13-BTN to BTN (vertical position). The reason for this is explained in section [Recommended setting for jumper "A13-BTN"](#recommended-setting-for-jumper-a13-btn).
-2. Download the following archives and files to your PC/MAC/Desktop:
-    * Basis: [Sidekick64 release v0.48 by Frenetic](https://github.com/frntc/Sidekick64/releases/download/0.48/Sidekick_64_and_264_v0.48.zip)
-    * For *cable* based network with Raspberry Pi 3B+: [`kernel_sk64_net.img`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.48%2Bnet-alpha3/kernel_sk64_net.img)  (link points to release alpha3)
-    * For *WLAN* based network with Raspberry Pi 3A+ or 3B+:
-        - [`kernel_sk64_wlan.img`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.48%2Bnet-alpha3/kernel_sk64_wlan.img)  (link points to release alpha3)
-        - [`wlan.zip`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.48%2Bnet-alpha1/wlan.zip)
-    * [`raspberry_firmware_updated.zip`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.48%2Bnet-alpha1/raspberry_firmware_updated.zip). It provides current versions of some Raspberry Pi firmware files.
-3. Extract all downloaded zip archives.
-4. Copy the files of Sidekick64 release v0.48 (by Frenetic) to an SD card to create a working vanilla Sidekick64 SD card. Make sure your Sidekick64 is already booting and working fine with the SD card in this state.
-5. Copy the network kernel(s) file(s) you want to use to the root folder of your SD card. So next to the existing kernel file `kernel_sk64.img` you will see one or two network kernel files (`kernel_sk64_net.img` and/or `kernel_sk64_wlan.img`).
-6. The files in the archive `raspberry_firmware_updated.zip` replace existing files in the root folder of the SD card with newer versions. If you wish you can create backups of the old versions to be able to revert to them.
-7. If you wish to use the WLAN kernel image `kernel_sk64_wlan.img` you additionally need to copy the folder `wlan` (from archive `wlan.zip`) to the SD card's root folder. The file `wpa_supplicant.conf` needs to be edited to add the correct SSID and passphrase of your personal WLAN. See [WLAN, SSID and passphrase](#wlan-ssid-and-passphrase) for details.
-8. Important: You need to edit the file `sidekick64.txt` in the root folder. Change the name of the kernel image that should be booted. Example: `kernel=kernel_sk64_wlan.img`. You can always revert to booting the vanilla kernel by changing this line to `kernel=kernel_sk64.img`.
-9. Boot Sidekick64 and you should see a menu item "Network" on the main menu. If it doesn't boot, connect a HDMI screen to the Raspberry and have a look if you can see any error messages during boot.
-10. To use the SKTP browser it needs to know the SKTP server's hostname to connect to. Add the following line to the file `C64/sidekick64.cfg` on the SD card: `NET_SKTPHOST_NAME "sktpdemo.cafeobskur.de"`
+1. Download the following archives and files to your PC/MAC/Desktop:
+    * Basis: [Sidekick64 release v0.51 by Frenetic](https://github.com/frntc/Sidekick64/releases/download/v0.51/Sidekick64-0.51a.zip)
+    * Download the network kernel image (supports both WLAN and cable based network): [`kernel_sk64_net.img`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.51%2Bnet-alpha5/kernel_sk64_net.img) (link points to release alpha5)
+    * For *WLAN* based network with Raspberry Pi 3A+ or 3B+: [`wlan.zip`](https://github.com/hpingel/Sidekick64/releases/download/sk64-v0.48%2Bnet-alpha1/wlan.zip)
+2. Extract all downloaded zip archives.
+3. Copy the files of Sidekick64 release v0.51 (by Frenetic) to an SD card to create a working vanilla Sidekick64 SD card. Make sure your Sidekick64 is already booting and working fine with the SD card in this state.
+4. Copy the network kernel file to the root folder of your SD card. So next to the existing kernel file `kernel_sk64.img` you will see `kernel_sk64_net.img`.
+5. If you wish to use WLAN you additionally need to copy the folder `wlan` (from archive `wlan.zip`) to the SD card's root folder. The file `wpa_supplicant.conf` needs to be edited to add the correct SSID and passphrase of your personal WLAN. See [WLAN, SSID and passphrase](#wlan-ssid-and-passphrase) for details.
+6. Important: You need to edit the file `sidekick64_rpi0_c128.txt` in the root folder (this is by default the active profile included in config.txt). Change the name of the kernel image that should be booted to `kernel=kernel_sk64_net.img`. You can always revert to booting the vanilla kernel by changing this line to `kernel=kernel_sk64.img`.
+7. Boot Sidekick64 and you should see a menu item "Network" on the main menu. If it doesn't boot, connect a HDMI screen to the Raspberry and have a look if you can see any error messages during boot.
+8. To use the SKTP browser it needs to know the SKTP server's hostname to connect to. Add the following line to the file `C64/sidekick64.cfg` on the SD card: `NET_SKTPHOST_NAME "sktpdemo.cafeobskur.de"`
 
 ## Joining a network
 ### Basics
@@ -112,16 +107,20 @@ Additionally, a user might not need network connectivity with Sidekick64 on a da
 On the other hand it also seemed to make sense to offer a configuration option to always directly establish a network connection during boot time of Sidekick64 if desired. Therefore, a setting can be added to enforce network on boot - see section [Configuration parameters](#configuration-parameters) for details. Enabling this will mean that the Sidekick64 will need several seconds longer to boot until it shows its normal menu screen on the C64.
 
 ## Web interface and web server
-One way to transfer files from a PC, tablet or smartphone to Sidekick64 is to use the web interface that is provided by the built-in webserver. The web interface allows to upload Sidekick64 kernel images (overwrites the current Sidekick kernel on SD card and reboots), PRG files, SID files, CRT files, D64 files or BIN files (C128 custom roms). The file types targeted at the C64/C128 platform can be launched directly via Sidekick64 after the upload is finished and/or saved to the SD card.
+One way to transfer files from a PC, tablet or smartphone to Sidekick64 is to use the web interface that is provided by the built-in webserver. The web interface allows to upload Sidekick64 kernel images (overwrites the current Sidekick kernel on SD card and reboots), PRG files, SID files, CRT files, D64 files or BIN files (C128 custom roms) and also MOD, YM and WAV files (Warning: Only try to upload very small WAV files!). The file types targeted at the C64/C128 platform can be launched directly via Sidekick64 after the upload is finished and/or saved to the SD card.
 
-The webserver can be launched manually from the Sidekick64 menu's network page by pressing "w" on the keyboard or it may also become active straight after a network connection is established by adding a configuration parameter - see section [Configuration parameters](#configuration-parameters) for details. In combination with network on boot this might be helpful for developers who want to test their own cross-developed C64 software sending it from a PC over to Sidekick64 to be executed on the real machine.
+You can upload a PRG or do a kernel update via the command line by calling curl like this:
+
+`curl -s --show-error -F "kernelimg=@/home/ich/Downloads/wolflingteaser.prg" -F "radio_saveorlaunch=l" http://sidekick64/upload.html > /dev/null`
+
+The web server can be launched manually from the Sidekick64 menu's network page by pressing "w" on the keyboard or it may also become active straight after a network connection is established by adding a configuration parameter - see section [Configuration parameters](#configuration-parameters) for details. In combination with network on boot this might be helpful for developers who want to test their own cross-developed C64 software sending it from a PC over to Sidekick64 to be executed on the real machine.
 
 The web interface is currently only available unencrypted via HTTP (on port 80) and doesn't come with authentication or password protection.
 
 The web interface UI is currently based on Bootstrap loaded via CDN.
 
 ## Stand-alone Sidekick mode (via web interface)
-In theory it is possible to have the Sidekick64 cartridge lying on a table without being plugged-in to the expansion port of a Commodore computer and still being able to use the web interface to upload data to the SD card of Sidekick64. (This feature has not been tested very well so it is likely that it will not work completely at the moment.)
+In theory it is possible to have the Sidekick64 cartridge lying on a table without being plugged-in to the expansion port of a Commodore computer and still being able to use the web interface to upload data to the SD card of Sidekick64. (This feature has not been tested regularly.)
 
 ## Modem emulation
 Two types of modems may be emulated as long as Sidekick is not busy with emulating something very demanding like an EasyFlash or a Freezer cartridge. As long as Sidekick is in launcher mode or in the BASIC prompt mode, modem emulation is possible with PRGs loaded via Sidekick or from a floppy disk. Terminal software used has to be in PRG format which is not a problem as CCGMS2021 and other tools all are available as PRGs.
@@ -156,7 +155,7 @@ As an alternative to FT231x, a USB2RS232 adaper with PL2303 chipset is also supp
 ### Swiftlink/Turbo232 modem (highly experimental)
 A Swiftlink modem may be emulated (which normally would be connected to the expansion port). This is still highly experimental at the moment and will crash CCGMS after a couple of screens.
 
-If you want to test this, use the latest cable based network kernel as Swiftlink emulation works better there than with the WLAN kernel.
+If you want to test this, use ethernet based network kernel as Swiftlink emulation works better there than with WLAN.
 * In the network menu screen of Sidekick64 hit the key "m" until the modem emulation type is shown to be "Swiftlink".
 * In CCGMS, set modem type to `Swift/Turbo DE`. The Baud rate setting can be left unchanged.
 
@@ -165,19 +164,19 @@ SKTP jokingly stands for "Sidekick64 Transfer Protocol" and is a very simple and
 This enables us to do the following:
 
 * Applications / features available through Sidekick64 don't have to run on Sidekick64 but can be running in a hosted or cloud environment. This means for example that changes and updates required to such an application will not force the Sidekick64 kernel to be updated.
-* In theory it allows interactive multi user applications like simple games or chat apps.
+* In theory it allows interactive multi user applications like simple games or chat apps (see Arena).
 * It allows interaction with most services on the World Wide Web
 * In addition to screen updates SKTP allows to request Sidekick64 to download a payload from a web adress (via HTTP or HTTPS), store it on the SD card and/or execute it on the C64. This means, files like PRG, SID, CRT, etc. may be downloaded from the internet. This is tightly coupled to the Sidekick64 menu code as the possibility to launch a binary is essential here.
 
 Currently four example applications exist that make use of SKTP:
 ### CSDb Launcher
-Allows to browse latest releases and a couple of selected top lists to easily access attractive releases from the world of the C64 demo scene.
+Allows to browse latest releases and a couple of selected top lists to easily access attractive releases from the world of the C64 demo scene. A search function allows access to all releases. Release screenshots will be displayed on the mini TFT display on the Sidekick64 module.
 ### HVSC Browser
 Allows to browse and play the complete music in the High Voltage SID Collection.
 ### Forum64 RSS Viewer
 Allows to launch a dynamically generated PRG (available in different flavours for C64, C128@80columns, C16/Plus/4) that displays the latest posts from the RSS feed of Forum64.
-### Simple text chat
-To test and demonstrate multiuser capabilities a simple text chat is available.
+### Arena with mini game and simple text chat
+To test and demonstrate multiuser capabilities a mini game and simple text chat is available.
 
 If you want to try the SKTP browser without Sidekick64 there is a [Javascript based SKTP client](https://sktpdemo.cafeobskur.de/) available running in any web browser.
 
@@ -186,17 +185,17 @@ You may change some network default settings by editing configuration files on t
 
 ### Booting the right Sidekick64 kernel image
 
-It should in theory be possible to switch between the normal Sidekick64 kernel (vanilla), the network kernel (Ethernet cable based) and the WLAN kernel while everything is stored on one SD card.
+It should in theory be possible to switch between the normal Sidekick64 kernel (vanilla) and the network kernel (WLAN or ethernet cable based) while everything is stored on one SD card.
 
 There might be problems with the Raspberry Pi firmware files which exist in older and newer revisions. The network kernels tend to use the latest Raspberry Pi firmware files while the vanilla kernel uses older ones.
 
-The vanilla kernel is called `kernel_sk64.img` and is always in the root folder of the SD card. Network kernels have different file names (`kernel_sk64_net.img`, `kernel_sk64_wlan.img`) and should also be stored in the root folder.
+The vanilla kernel is called `kernel_sk64.img` and is always in the root folder of the SD card. The network kernel is called `kernel_sk64_net.img` and should also be stored in the root folder.
 
 Within the file `sidekick64.txt` in the root folder of the SD card you can clarify which kernel image should be booted when Sidekick64 is powered up. The vanilla kernel is booted by the line `kernel=kernel_sk64.img`. You can add lines below this line like `kernel=kernel_sk64_net.img` to boot the cable based network kernel instead. You may also disable lines by prefixing it with `#`. But there should always be one line that is set to active. Otherwise Sidekick64 will fail to boot.
 
 ### WLAN, SSID and passphrase
 
-If you use the WLAN kernel, you have to check if you have a folder `wlan` on your SD card containing the Raspberry Pi firmware files for WLAN networking.
+If you want to use WLAN, you have to check if you have a folder `wlan` on your SD card containing the Raspberry Pi firmware files for WLAN networking.
 
 You also have to edit the file `wlan/wpa_supplicant.conf` and add SSID and passphrase in cleartext. Edit the two values for `ssid` and `psk`:
 
@@ -260,13 +259,6 @@ The Sidekick kernel software is based on the bare metal Raspberry Pi C++ framewo
 Because it seemed to make a lot of sense to be able to make use of HTTPS requests  with a network enabled Sidekick, the network fork is commonly compiled against the project [circle-stdlib](https://github.com/smuehlst/circle-stdlib) that is maintained by Stephan Mühlstrasser. It combines Circle together with newlib as C++ standard library and already includes mbedtls. This means, the network fork is being compiled directly against circle-stdlib (at the time of writing circle-stdlib v15.10 including Circle Step 44.3).
 
 There are multiple variants of the Makefile available within the network branch as sometimes we want to test something just with Circle and sometimes with circle-stdlib.
-#### Network kernel variants
-Because WLAN and Ethernet can not be supported at the same time with the same drivers by Circle, there is the need to compile two different network kernel variants. One for WLAN, one for Ethernet based network.
-
-This also means that at compile time some compilation flags have to be set that are different from vanilla Sidekick64:
-*  Enabling USE_SD_HOST for the WLAN kernel (which conflicts with REALTIME)
-*  Enabling slow USB devices (omit NO_USB_SOFT_INTR)
-*  ARM_ALLOW_MULTI_CORE (at the moment it is unclear if this is beneficial)
 
 ### SD card: Mount state, potentially more write operations
 
@@ -284,7 +276,7 @@ The Sidekick64 PCB can be configured to listen to the signal A13 of the C64/C128
 Background: During tests of the network kernel we have observed that the menu screen refresh might be affected if the signal jumper is set to A13. This is most obvious in the network setting subscreen of the Sidekick menu where the CPU temperature is displayed and the screen will automatically refresh itself regularly. The Sidekick64 network enabled kernel uses an NMI based screen refresh while the menu is active. It seems that the A13 signal influences the triggering of NMIs.
 
 ### Network reliability
-Depending on the current emulation type Sidekick64 may be too busy to handle network traffic in parallel without instabilities in the emulation of the current payload. This typically applies to cartridge emulation like EasyFlash, NeoRAM or Freezer cartridges. This means, network connectivity will hibernate while Sidekick64 emulates a cartridge. Pressing the Sidekick64 reset button for a more than one second will stop the emulation, bring the Sidekick menu back up and also continue network connectivity.
+Depending on the current emulation type Sidekick64 may be too busy to handle network traffic in parallel without instabilities in the emulation of the current payload. This typically applies to cartridge emulation like EasyFlash, NeoRAM or Freezer cartridges or the audio player for modules. This means, network connectivity will hibernate while Sidekick64 emulates a cartridge. Pressing the Sidekick64 reset button for a more than one second will stop the emulation, bring the Sidekick menu back up and also continue network connectivity.
 
 Cable-based ethernet with the Raspberry Pi 3B+ works reliable after hibernation but WLAN needs to reconnect to the Access point and may freeze the Sidekick64 if it fails to do so. In a lucky situation the reconnect only takes two or three seconds.
 
@@ -292,7 +284,7 @@ Emulating PRGs via the Launcher mode is more easy-going as an average PRG (game,
 
 This also means that during Launcher mode the WLAN connection will not be lost and WLAN can be enjoyed reliably over a longer period of time.
 
-Uploading a "large" file via the web interface may take much longer via WLAN as compared to cable based network.
+Uploading a "large" file via the web interface may take longer via WLAN as compared to cable based network.
 
 To wrap it up, WLAN is less convenient to use than ethernet via cable. In exchange a Raspberry Pi 3B+ with active network has the inconvenience of needing airflow to keep the CPU temperature steady.
 ### CRT files in root folder
