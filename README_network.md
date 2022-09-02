@@ -128,7 +128,7 @@ Two types of modems may be emulated as long as Sidekick is not busy with emulati
 ### Minimal Hayes compatible AT-command set
 Besides implementing two modem types a basic command line interface also had to be implemented to set the baud rate and connect to a BBS via hostname and port. At the moment, the following commands are implemented (while trying to stay compatible with the [Zimodem firmware](https://github.com/bozimmerman/Zimodem) by Bo Zimmerman):
 
-* `ATI` (currently shows welcome message and modem emulation type )
+* `ATI` (currently shows welcome message and modem emulation type and baudrate )
 * `ATI2` (print current local IP address of Sidekick64 )
 * `ATI7` (print current date and time)
 * `ATB` (change baud rate, values possible are `ATB300`, `ATB1200`, `ATB2400`, `ATB4800`, `ATB9600` - this doesn't affect the Swiftlink emulation so it is only relevant for Userport modem emulation)
@@ -144,7 +144,7 @@ A userport based UP9600 modem may be emulated with relatively simple cabling or 
 
 We connect RX (crossed), TX (crossed) and GND between the Userport and the FTDI adapter (set to 5V).
 
-The emulation currently works with a baud rate up to 4800. For a reliable baud rate of 9600 flow control has to be implemented in Circle (and then we need another two cables for connecting CTS and RTS). The Sidekick kernel must be compiled with Circle option USE_USB_SOF_INTR to allow using the FTDI-USB-adapter.
+The emulation currently works with a baud rate up to 4800 without Flow Control. For a reliable baud rate of 9600 flow control was hacked into Circle by me. For this, we need another two cables for connecting CTS (and RTS, but in reality it is not really needed). Also, the CTS signal from an FT231x needs to be logically inverted to work or the terminal progam needs to be hacked to work with the un-inverted logic!
 
 If you have cabled up your userport to the FTDI-Adapter and plugged the FTDI into a USB port of the Raspberry Pi, enable Userport modem emulation like this:
 * In the network menu screen of Sidekick64 hit the key "m" until the modem emulation type is shown to be "Userport".
