@@ -229,11 +229,17 @@ The following options may be added to the file `C64/sidekick64.cfg` but are not 
 I would like to point out some of the differences between the normal Sidekick64 release kernel and the network kernel so that people can inform themselves before testing the network kernel.
 ### USB stack, power consumption and CPU temperature
 To be able to use the network devices of the Raspberry Pi we have to tell Circle to turn on the USB stack of the Raspberry Pi. Handling the USB stack during Sidekick64's runtime will mean that the single CPU core used by Sidekick64 is a little bit more busy than before. Because the CPU core is forced to run at a fixed maximum speed this will result in an increased CPU temperature and power consumption.
+
 The power consumption change depends on the Raspberry Pi model used.  While a model 3A+ or Zero 2 W will probably have a very similar power consumption even with USB stack and WLAN turned on, a model 3B+ will double it's power consumption from around 350mA to around 700mA when ethernet is enabled. This has to be taken into account when considering if it is feasible to power Sidekick64 from the expansion port of the C64 and therefore from the C64 PSU.
+
 Now for the CPU temperature: In an everyday use case the Raspberry Pi would throttle CPU cores once it detects that the CPU  is getting "hot" but in the case of Sidekick64 the reliability of the communication with the expansion port of the C64 is a priority and therefore throttling the Raspberry's CPU is not an option as it would destabilize the emulation which would lead to crashes or flickering menu screens. This may sound dangerous, but in fact there is not much harm done except for an emulation that was stable before suddenly becoming unstable.
+
 While the CPU temperature of a running Sidekick64 would normally be below 55° Celsius, turning on network features and enabling the USB stack with it may eventually make the temperature hit 60° Celsius. This is not a problem as such but has consequences that need to be known and understood to circumvent problems.
+
 With default settings for `temp_soft_limit`, a Raspberry Pi 3A+ or 3B+ will automatically start to throttle its CPU once the 60° C are reached to prevent overheating (although the CPU would be capable of running with more than 80°C without damage). If you observe a CPU temperature of 59°C on the system info screen of the network menu then your Sidekick64 emulation may appear to become unstable very soon. Nothing can break, nothing can be damaged, as the Raspberry is still running fine and just behaving as it should behave. Only the emulation appears unstable. (This doesn't seem to apply for the Zero 2 W where there is no parameter `temp_soft_limit`.)
+
 If you detect that the Raspberry's CPU temperature is likely to reach the 60° C there are two directions in which you can go to solve the problem: Either improve the air circulation around the CPU to stop it from reaching 60°C or increase the default throttling temperature limit to something higher - like for example 62°C - and hope that the Raspberry's CPU will not reach the new limit.
+
 How quickly your Sidekick's Raspberry CPU is heating up may depend on different factors:
 *    Inside a case: Does the case allow for some airflow?
 *    Raspberry Pi Model: The Raspberry Pi 3B+ is getting hotter than an 3A+. A model 3A+ will probably stay at around 57-58°C and not reach the 60° unless it is inside of a case.
