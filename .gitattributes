@@ -1,0 +1,19 @@
+*.h text
+*.cpp text
+*.c text
+*.html text
+Makefile* text
+*.txt text
+*.bat txt
+*.S text
+*.a text
+*.cfg text
+
+*.png binary
+*.gif binary
+*.jpg binary
+*.zip binary
+*.pdf binary
+*.stl binary
+*.blend binary
+*.exe binaty
