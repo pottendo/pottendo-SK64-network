@@ -261,6 +261,9 @@ C64IsRunning:																						\
 #define min(a,b) (((a)<(b))?(a):(b))
 #define max(a,b) (((a)>(b))?(a):(b))
 
+#define minsk(a,b) (((a)<(b))?(a):(b))
+#define maxsk(a,b) (((a)>(b))?(a):(b))
+
 __attribute__( ( always_inline ) ) inline u8 flipByte( u8 x )
 {
 	u32 t;
