@@ -1160,6 +1160,12 @@ boolean CSidekickNet::checkForFinishedDownload()
 				setErrorMsgC64((char*)"             Saving PRG file            ", false);
 //				setErrorMsgC64((char*)"     Saving and launching PRG file      ");
 			}
+			else if ( strcmp( m_CSDBDownloadExtension, "bin" ) == 0)
+			{
+				//                    "012345678901234567890123456789012345XXXX"
+				setErrorMsgC64((char*)"             Saving BIN file            ", false);
+//				setErrorMsgC64((char*)"     Saving and launching BIN file      ");
+			}
 			else if ( strcmp( m_CSDBDownloadExtension, "sid" ) == 0)
 			{
 				//                    "012345678901234567890123456789012345XXXX"
@@ -1659,6 +1665,8 @@ void CSidekickNet::setSavePath(char * subfolder)
 #else
 		savePath.Append( (const char *) "D264/" );
 #endif
+	else if ( strcmp(m_CSDBDownloadExtension,"bin") == 0)
+		savePath.Append( (const char *) "KERNAL/" );
 	else if ( strcmp(m_CSDBDownloadExtension,"sid") == 0)
 		savePath.Append( (const char *) "SID/" );
 	else if ( strcmp(m_CSDBDownloadExtension,"mod") == 0 ||
