@@ -98,9 +98,6 @@ const u8 WEBUPLOADPRG[] =
 //temporary hack
 extern u32 prgSizeLaunch;
 extern unsigned char prgDataLaunch[ 1027*1024 ] AAA;
-#ifdef WITH_RENDER
-  extern unsigned char logo_bg_raw[32000];
-#endif
 
 extern int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME );
 
@@ -209,10 +206,8 @@ CSidekickNet::CSidekickNet(
 }
 
 void CSidekickNet::setErrorMsgC64( char * msg, boolean sticky = true ){ 
-	#ifndef WITH_RENDER
 	setErrorMsg2( msg, sticky );
 	m_isMenuScreenUpdateNeeded = true;
-	#endif
 };
 
 /*
@@ -362,10 +357,8 @@ boolean CSidekickNet::Initialize()
 		EnableWebserver();
 	}
 
-	#ifndef WITH_RENDER
-	 m_isMenuScreenUpdateNeeded = true;
-	 clearErrorMsg(); //on c64screen, kernel menu
-  #endif
+	m_isMenuScreenUpdateNeeded = true;
+	clearErrorMsg(); //on c64screen, kernel menu
 	return true;
 }
 
@@ -1107,10 +1100,8 @@ void CSidekickNet::prepareLaunchOfUpload( char * ext, char * filename, u8 mode, 
 
 void CSidekickNet::cleanupDownloadData()
 {
-	#ifndef WITH_RENDER
-	  clearErrorMsg(); //on c64screen, kernel menu
-	  redrawSktpScreen();
-  #endif
+  clearErrorMsg(); //on c64screen, kernel menu
+  redrawSktpScreen();
 	m_CSDBDownloadPath[0] = '\0';
 	m_CSDBDownloadExtension[0] = '\0';
 	// this is used from kernel_menu to display name on screen or to load a tga image
@@ -1352,29 +1343,6 @@ void CSidekickNet::getCSDBBinaryContent( ){
 	if (m_loglevel > 2)
 		logger->Write( "getCSDBBinaryContent", LogNotice, "HTTPS Document length: %i", iFileLength);
 }
-
-//for kernel render example
-#ifdef WITH_RENDER
-
-void CSidekickNet::updateFrame(){
-	if (!m_isActive || m_SKTPServer.port == 0)
-	{
-		return;
-	}
-	unsigned iFileLength = 0;
-	if (m_videoFrameCounter < 1) m_videoFrameCounter = 1;
-	
-  //CString path = "/videotest.php?frame=";
-	CString path = "/c64frames/big_buck_bunny_";
-	CString Number; 
-	Number.Format ("%05d", m_videoFrameCounter);
-	path.Append( Number );
-	path.Append( ".bin" );
-	HTTPGet ( m_SKTPServer, path, (char*) logo_bg_raw, iFileLength);
-	m_videoFrameCounter++;
-	if (m_videoFrameCounter > 1500) m_videoFrameCounter = 1;
-}
-#endif
 
 void CSidekickNet::resetSktpSession(){
 	m_sktpSession	= 0;

@@ -98,9 +98,6 @@ public:
 
 	//boolean CheckForSidekickKernelUpdate ();
 	boolean UpdateTime (void);
-	#ifdef WITH_RENDER
-	void updateFrame();
-	#endif
 	void checkForSupportedPiModel();
 	boolean isFirstSKTPScreen();
 	void enteringSktpScreen();
