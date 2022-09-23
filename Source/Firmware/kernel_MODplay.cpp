@@ -38,8 +38,31 @@
 #include <math.h>
 #include "config.h"
 
+#ifndef LIBOPENMPT
 #define POCKETMOD_IMPLEMENTATION
 #include "pocketmod.h"
+#else
+#include <string>
+#include "libs/openmpt/libopenmpt/libopenmpt.hpp"
+
+struct fake_context
+{
+    unsigned char *source;      /* Pointer to source MOD data              */
+    unsigned char *order;       /* Pattern order table                     */
+    unsigned char *patterns;    /* Start of pattern data                   */
+    unsigned char length;       /* Patterns in the order (1..128)          */
+    unsigned char num_patterns; /* Patterns in the file (1..128)           */
+    unsigned char num_samples;  /* Sample count (15 or 31)                 */
+    unsigned char num_channels; /* Channel count (1..32)                   */
+    unsigned char used_num_samples; //hacked in by frntc
+    int ticks_per_line;         /* A.K.A. song speed (initially 6)         */
+    signed char pattern;        /* Current pattern in order                */
+    signed char line;           /* Current line in pattern                 */
+    short tick;                 /* Current tick in line                    */
+    float sample;               /* Current sample in tick                  */
+};
+
+#endif
 
 #include "mahoney_lut.h"
 
@@ -311,14 +334,24 @@ static float clip(float value)
     return ( value + 1.0f ) * 0.5f;
 }
 
+#ifdef LIBOPENMPT
+static openmpt::module * mod;
+const std::map< std::string, std::string > ctls;
+static fake_context context;
+
+#else
 static pocketmod_context context;
+#endif
+
 static u8 *mod_data;//, *slash;
 static u8 *ringbuf;
 static u32 *ringbufHDMI;
 static u32 mod_size, rbRead, rbWrite;
 #define ringbufSize 16384
 
+#ifndef LIBOPENMPT
 pocketmod_context modJumpContext[ 128 ];
+#endif
 
 static int dheight[ 48 ], firstRun = 1;
 static u8 colorbar[ 24 ];
@@ -349,6 +382,9 @@ void computeSamplesAndScreenUpdate( u16 vol )
 
 	if ( playFileType == 0 )
 	{
+		#ifndef LIBOPENMPT
+		//TODO: use set_position_order_row()
+		
 		if ( modJumpTo > -1 )
 		{
 			memcpy( &context, &modJumpContext[ modJumpTo ], sizeof( pocketmod_context ) );
@@ -358,18 +394,34 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				context.channels[ i ].increment *= (float)MOD_SCAN_sampleRate / (float)MOD_sampleRate;
 			modJumpTo = -1;
 		}
+		#endif
 
 		int bytesToRender = 512 * sizeof( float ) * 2;
+		float globalVolume = (float)vol / 256.0f;
+		float sampleLeft, sampleRight;
 
+#ifdef LIBOPENMPT
+		constexpr std::size_t buffersize = 1024;
+		std::vector<float> left( buffersize );
+		std::vector<float> right( buffersize );	
+		rendered_samples = mod->read( MOD_sampleRate, buffersize, left.data(), right.data());
+#else
 		int rendered_bytes = pocketmod_render(&context, buffer, stats, bytesToRender );
 		rendered_samples = rendered_bytes / sizeof(float[2]);
-		float globalVolume = (float)vol / 256.0f;
+#endif		
 		for ( int i = 0; i < rendered_samples; i++) 
 		{
+			#ifdef LIBOPENMPT
+							sampleLeft = left[ i ];
+							sampleRight = right[ i ];
+			#else
+							sampleLeft = buffer[ i ][ 0 ];
+							sampleRight = buffer[ i ][ 1 ];
+			#endif			
 			if ( addrSID2 == 0 )
 			{
-				int v1 = (int)( clip( ( buffer[ i ][ 0 ] + modOfs ) * globalVolume * modScale * modVolume ) * 65535.0f );
-				int v2 = (int)( clip( ( buffer[ i ][ 1 ] + modOfs ) * globalVolume * modScale * modVolume ) * 65535.0f );
+				int v1 = (int)( clip( ( sampleLeft + modOfs ) * globalVolume * modScale * modVolume ) * 65535.0f );
+				int v2 = (int)( clip( ( sampleRight + modOfs ) * globalVolume * modScale * modVolume ) * 65535.0f );
 				int o1 = ( v1 + v2 ) >> 9;
 
 				#ifdef HDMI_SOUND_MODPLAY
@@ -387,14 +439,14 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				//seed = (1664525*seed+1013904223);
 				//float ditherNoise = ( seed >> 16 ) / 65536.0f - 0.5f;
 				//static float triangleState = 0;
-				float r1 = clip( ( buffer[ i ][ 0 ] + modOfs ) * globalVolume * modScale * modVolume );
+				float r1 = clip( ( sampleLeft + modOfs ) * globalVolume * modScale * modVolume );
 				r1 *= 256.0f;
 				//r1 += ditherNoise - triangleState;
 				if ( r1 > 255.0f ) r1 = 255.0f;
 				if ( r1 < 0.0f ) r1 = 0.0f;
 				int v1 = (int)( r1 * 65535.0f / 256.0f );
 				int o1 = v1 >> 8;
-				float r2 = clip( ( buffer[ i ][ 1 ] + modOfs ) * globalVolume * modScale * modVolume );
+				float r2 = clip( ( sampleRight + modOfs ) * globalVolume * modScale * modVolume );
 				r2 *= 256.0f;
 				//r2 += ditherNoise - triangleState;
 				if ( r2 > 255.0f ) r2 = 255.0f;
@@ -412,8 +464,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				#endif
 				ringbuf[ ( rbWrite++ )&( ringbufSize - 1 ) ] = o2;
 			}
-
-			float v = ( buffer[ i ][ 0 ] + buffer[ i ][ 1 ] ) * 0.5f;
+			float v = ( sampleLeft + sampleRight ) * 0.5f;
 			mean += v;
 			in_real[ i ] = v; 
 		}
@@ -427,7 +478,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 		} else
 		if ( modJumpTo == 2 )
 		{
-			c64CycleCount = max( 0, c64CycleCount - c64ClockSpeed * 3 );
+			c64CycleCount = maxsk( 0, c64CycleCount - c64ClockSpeed * 3 );
 			modJumpTo = -1;
 		} 
 
@@ -493,7 +544,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 		} else
 		if ( modJumpTo == 2 && pMusic->isSeekable() )
 		{
-			pMusic->setMusicTime( max( 0, pMusic->getPos() - 3000 ) );
+			pMusic->setMusicTime( maxsk( 0, pMusic->getPos() - 3000 ) );
 			modJumpTo = -1;
 		} 
 
@@ -526,10 +577,17 @@ void computeSamplesAndScreenUpdate( u16 vol )
 		if ( playFileType == 0 )
 		{
 			static int prevLine = -2, prevPatt = -2, prevSpeed = -2;
+
+			#ifdef LIBOPENMPT
+			context.line = mod->get_current_row();
+			context.pattern = mod->get_current_pattern();
+			context.ticks_per_line = mod->get_current_speed();
+			#endif
+			
 			if ( prevLine != context.line )
 			{
 				prevLine = context.line;
-				sprintf( buf, "%02d", max( 0, context.line ) );
+				sprintf( buf, "%02d", maxsk( 0, context.line ) );
 				printSpriteLayer( fb, buf, 80, 78+5 );
 			}
 
@@ -539,6 +597,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				printSpriteLayer( fb, buf, 80, 70+5 );
 			}
 
+			//song speed
 			if ( prevSpeed != context.ticks_per_line )
 			{
 				prevSpeed = context.ticks_per_line;
@@ -601,7 +660,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				height[ i ] = 0;
 				float x = (float)( i + 1 + 8 ) / (48.0f+8.0f);
 				last = (int)( x * x * x * 256.0f );
-				for ( int j = first; j < max( first + 1, last ); j++ )
+				for ( int j = first; j < maxsk( first + 1, last ); j++ )
 					height[ i ] += 2.0f * ( sqrtf(out_real[j]*out_real[j]+out_imag[j]*out_imag[j]) ) * 24.0f * ( 1.0f + x * 4.0f ) * s;
 				first = last;
 
@@ -897,13 +956,14 @@ void CKernelMODplay::Run( void )
 				}
 		#endif
 
+		float minV = 1e30f, maxV = -1e30f;
+		#ifndef LIBOPENMPT
+
 		if (!pocketmod_init(&context, mod_data, mod_size, MOD_SCAN_sampleRate)) 
 		{
 			// error: not a valid MOD file
 			return;
 		}
-
-		float minV = 1e30f, maxV = -1e30f;
 
 		int contextIdx = 0;
 		memcpy( &modJumpContext[ 0 ], &context, sizeof( pocketmod_context ) );
@@ -912,7 +972,6 @@ void CKernelMODplay::Run( void )
 		{
 			float buffer[512][2];
 			u32 stats[512];
-
 			int rendered_bytes = pocketmod_render(&context, buffer, stats, sizeof(buffer));
 			int rendered_samples = rendered_bytes / sizeof(float[2]);
 
@@ -930,15 +989,39 @@ void CKernelMODplay::Run( void )
 				if ( buffer[ i ][ 1 ] > maxV ) maxV = buffer[ i ][ 1 ];
 			}
 		}
-		modScale = 2.0f / ( maxV - minV ) * 0.95f;
-		modOfs = -( minV + maxV ) * 0.5f;
-
 
 		if (!pocketmod_init(&context, mod_data, mod_size, MOD_sampleRate)) 
 		{
 			// error: not a valid MOD file
 			return;
 		}
+		#else
+			mod = new openmpt::module ( mod_data, mod_size, std::clog, ctls );
+			mod->set_repeat_count(-1);
+			constexpr std::size_t buffersize = 1024;
+			std::vector<float> left( buffersize );
+			std::vector<float> right( buffersize );	
+			int rendered_samples;
+			while ( rendered_samples = mod->read( MOD_sampleRate, buffersize, left.data(), right.data()) > 0)
+			{
+				for ( int i = 0; i < rendered_samples; i++) 
+				{
+					if ( left[ i ] < minV ) minV = left[ i ];
+					if ( right[ i ] < minV ) minV = right[ i ];
+					if ( left[ i ] > maxV ) maxV = left[ i ];
+					if ( right[ i ] > maxV ) maxV = right[ i ];
+				}
+				//if ( mod->get_position_seconds() > 20)
+				//	break;
+			}
+//			mod->set_position_seconds(0);
+			mod = NULL;
+			mod = new openmpt::module ( mod_data, mod_size, std::clog, ctls );
+			mod->set_repeat_count(-1);
+		#endif
+		modScale = 2.0f / ( maxV - minV ) * 0.95f;
+		modOfs = -( minV + maxV ) * 0.5f;
+
 	} else
 	if ( playFileType == 1 ) 
 	{
@@ -992,6 +1075,16 @@ void CKernelMODplay::Run( void )
 	{
 		//                     012345678901234567890123
 		printSpriteLayer( fb, ".- Sidekick64 MODPlay -.", 0, 0 );
+
+		#ifdef LIBOPENMPT
+		context.source = (unsigned char *) mod->get_metadata("title").c_str();
+		context.num_channels = mod->get_num_channels();
+		context.used_num_samples = mod->get_num_samples();
+		context.line = mod->get_current_row();
+		context.length= mod->get_num_patterns();
+		context.pattern = mod->get_current_pattern();
+		context.ticks_per_line = mod->get_current_speed();
+		#endif
 
 		char buf[ 32 ];
 		memcpy( buf, context.source, 20 );
