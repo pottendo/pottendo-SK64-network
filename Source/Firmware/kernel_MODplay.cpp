@@ -848,6 +848,12 @@ void CKernelMODplay::Run( void )
 
 	if ( strstr( (char*)fn_up, ".MOD" ) )
 		playFileType = 0; else
+#ifdef LIBOPENMPT
+	if ( strstr( (char*)fn_up, ".IT" ) )
+			playFileType = 0; else
+	if ( strstr( (char*)fn_up, ".XM" ) )
+		playFileType = 0; else
+#endif		
 	if ( strstr( (char*)fn_up, ".WAV" ) )
 		playFileType = 1; else
 	if ( strstr( (char*)fn_up, ".YM" ) )
@@ -997,7 +1003,6 @@ void CKernelMODplay::Run( void )
 		}
 		#else
 			mod = new openmpt::module ( mod_data, mod_size, std::clog, ctls );
-			mod->set_repeat_count(-1);
 			constexpr std::size_t buffersize = 1024;
 			std::vector<float> left( buffersize );
 			std::vector<float> right( buffersize );	
@@ -1011,12 +1016,10 @@ void CKernelMODplay::Run( void )
 					if ( left[ i ] > maxV ) maxV = left[ i ];
 					if ( right[ i ] > maxV ) maxV = right[ i ];
 				}
-				//if ( mod->get_position_seconds() > 20)
-				//	break;
 			}
-//			mod->set_position_seconds(0);
-			mod = NULL;
-			mod = new openmpt::module ( mod_data, mod_size, std::clog, ctls );
+			mod->set_position_seconds(0);
+			//mod = NULL;
+			//mod = new openmpt::module ( mod_data, mod_size, std::clog, ctls );
 			mod->set_repeat_count(-1);
 		#endif
 		modScale = 2.0f / ( maxV - minV ) * 0.95f;
