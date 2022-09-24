@@ -71,8 +71,8 @@
 static const char NTPServer[]    = "pool.ntp.org";
 static const int nTimeZone       = 1*60;		// minutes diff to UTC
 static const char DRIVE[] = "SD:";
-//nDocMaxSize reserved 2 MB as the maximum size of the kernel file
-static const unsigned nDocMaxSize = 2000*1024;
+//nDocMaxSize reserved 5 MB as the maximum size of the kernel file
+static const unsigned nDocMaxSize = 5000*1024;
 
 static const char CSDB_HOST[] = "csdb.dk";
 
@@ -97,7 +97,7 @@ const u8 WEBUPLOADPRG[] =
 
 //temporary hack
 extern u32 prgSizeLaunch;
-extern unsigned char prgDataLaunch[ 1027*1024 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*5 ] AAA;
 
 extern int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME );
 
@@ -798,6 +798,8 @@ char * CSidekickNet::getCSDBDownloadFilename(){
 u8 CSidekickNet::getCSDBDownloadLaunchType(){
 	u8 type = 0;
 	if ( strcmp(m_CSDBDownloadExtension,"mod") == 0 ||
+		strcmp(m_CSDBDownloadExtension,"xm") == 0 ||
+		strcmp(m_CSDBDownloadExtension,"it") == 0 ||
 		strcmp(m_CSDBDownloadExtension,"ym") == 0 ||
 		strcmp(m_CSDBDownloadExtension,"wav") == 0
 	)	
@@ -1163,7 +1165,9 @@ boolean CSidekickNet::checkForFinishedDownload()
 				setErrorMsgC64((char*)"             Saving SID file            ", false);
 //				setErrorMsgC64((char*)"     Saving and launching SID file      ");
 			}
-			else if ( strcmp( m_CSDBDownloadExtension, "mod" ) == 0)
+			else if ( strcmp( m_CSDBDownloadExtension, "mod" ) == 0 || 
+								strcmp( m_CSDBDownloadExtension, "xm" ) == 0 ||
+								strcmp( m_CSDBDownloadExtension, "it" ) == 0 )
 			{
 				//                    "012345678901234567890123456789012345XXXX"
 				setErrorMsgC64((char*)"             Saving MOD file            ", false);
@@ -1514,8 +1518,10 @@ void CSidekickNet::parseSKTPDownloadCommand( char * pResponseBuffer, unsigned of
 	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "filename: >%s<", m_CSDBDownloadFilename);
 	//FIXME the extension grabbing only works if the download stuff is at the end of the response
 	//this is currently the case, but never change this...
-	memcpy( m_CSDBDownloadExtension, &m_CSDBDownloadFilename[ tmpFilenameLength -3 ], 3);
-	m_CSDBDownloadExtension[3] = '\0';
+	u8 o = 0;
+	if (m_CSDBDownloadFilename[ tmpFilenameLength -3 ] == '.') o = 1;
+	memcpy( m_CSDBDownloadExtension, &m_CSDBDownloadFilename[ tmpFilenameLength -3 +o], 3-o);
+	m_CSDBDownloadExtension[3-o] = '\0';
 	#ifndef WITHOUT_STDLIB
 	//workaround: tolower is only available with stdlib!
 	//enforce lowercase for extension because we compare it a lot
@@ -1523,7 +1529,7 @@ void CSidekickNet::parseSKTPDownloadCommand( char * pResponseBuffer, unsigned of
 		m_CSDBDownloadExtension[i] = tolower(m_CSDBDownloadExtension[i]);
 	}
 	#endif
-	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "extension: >%s<", m_CSDBDownloadExtension);
+	logger->Write( "parseSKTPDownloadCommand", LogNotice, "extension: >%s<", m_CSDBDownloadExtension);
 }
 
 
@@ -1639,6 +1645,8 @@ void CSidekickNet::setSavePath(char * subfolder)
 		savePath.Append( (const char *) "SID/" );
 	else if ( strcmp(m_CSDBDownloadExtension,"mod") == 0 ||
 				strcmp(m_CSDBDownloadExtension,"ym") == 0 ||
+				strcmp(m_CSDBDownloadExtension,"xm") == 0 ||
+				strcmp(m_CSDBDownloadExtension,"it") == 0 ||
 				strcmp(m_CSDBDownloadExtension,"wav") == 0
 	)
 		savePath.Append( (const char *) "MUSIC/" );

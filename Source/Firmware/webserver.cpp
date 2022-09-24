@@ -35,7 +35,7 @@ static const char FILENAME_CONFIG[] = "SD:C64/sidekick64.cfg";
 static const char DRIVE[] = "SD:";
 
 extern u32 prgSizeLaunch;
-extern unsigned char prgDataLaunch[ 1027*1024 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*5 ] AAA;
 
 // our content
 static const char s_Index[] =
@@ -287,6 +287,8 @@ CHTTPDaemon *CWebServer::CreateWorker (CNetSubSystem *pNetSubSystem, CSocket *pS
 					strcmp (extension, "crt") == 0 ||
 					strcmp (extension, "sid") == 0 ||
 					strcmp (extension, "mod") == 0 ||
+					strcmp (extension, "xm") == 0 ||
+					strcmp (extension, "it") == 0 ||
 					strcmp (extension, "wav") == 0 ||
 					strcmp (extension, "ym") == 0 ||
 					strcmp (extension, "bin") == 0) &&
