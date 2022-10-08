@@ -81,7 +81,8 @@ extern int screenType;
 #include "crt.h"
 #include "mygpiopinfiq.h"
 
-#ifdef WITH_NET		
+#ifdef WITH_NET
+#define WITH_NET_DEBUG
 #include "net.h"
 #endif
 
@@ -103,8 +104,12 @@ public:
 		m_Screen( m_Options.GetWidth(), m_Options.GetHeight() ),
 	#endif
 		m_Timer( &m_Interrupt ),
-		//m_Logger( m_Options.GetLogLevel(), &m_Timer ),
+#ifdef WITH_NET_DEBUG		
+		m_Logger( m_Options.GetLogLevel(), &m_Timer ),
+#else		
+		// 0 to hide all debug messages, 5 print all
 		m_Logger( 0, &m_Timer ),
+#endif
 #ifdef COMPILE_MENU_WITH_SOUND
 	#ifdef USE_VCHIQ_SOUND
 		m_VCHIQ( &m_Memory, &m_Interrupt ),
