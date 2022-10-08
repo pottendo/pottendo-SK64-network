@@ -43,7 +43,7 @@ static const char DRIVE[] = "SD:";
 #ifdef WITH_NET
 
 //unsigned delayHandleNetworkValue = 1500000;
-
+boolean hasNetData = false;
 
 //static 
 const u8 FILENAME_MENU_IN_MEMORY[] =
@@ -808,6 +808,7 @@ boolean CKernelMenu::handleNetwork( boolean doRender)
 				strcpy(FILENAME, m_SidekickNet.getCSDBDownloadFilename());
 				strcpy(menuItemStr, m_SidekickNet.getCSDBDownloadFilename());
 				lastChar = 0xfffffff;
+				hasNetData = true;
 			}
 			m_SidekickNet.cleanupDownloadData(); //this also removes the status message
 		}
@@ -2404,10 +2405,12 @@ int main( void )
 		case 43:
 		case 44:
 		case 45:
-			KernelMODplayRun( kernel.m_InputPin, &kernel, FILENAME, false, prgDataLaunch, prgSizeLaunch, startForC128, playingPSID, launchKernel == 43 || launchKernel == 45, launchKernel > 43 ? 1 : 0 );
 			#ifdef WITH_NET
+			KernelMODplayRun( kernel.m_InputPin, &kernel, FILENAME, hasNetData, prgDataLaunch, prgSizeLaunch, startForC128, playingPSID, launchKernel == 43 || launchKernel == 45, launchKernel > 43 ? 1 : 0 );
 			prgSizeLaunch = 0; //prevent double execute of the same data
 			FILENAME[0]		= 0;
+			#else
+			KernelMODplayRun( kernel.m_InputPin, &kernel, FILENAME, false, prgDataLaunch, prgSizeLaunch, startForC128, playingPSID, launchKernel == 43 || launchKernel == 45, launchKernel > 43 ? 1 : 0 );
 			#endif
 			CleanDataCache();
 			InvalidateDataCache();
@@ -2503,9 +2506,9 @@ int main( void )
 		}*/
 
 		#ifdef WITH_NET
+		hasNetData = false;
 		pSidekickNet->setCurrentKernel( (char*)"m" );
 		#endif
-
 	}
 
 	logger->Write( "RaspiMenu", LogNotice, "Rebooting..." );
