@@ -41,6 +41,7 @@
 #include <circle/version.h>
 
 #define KEY_AT 64
+
 #define KEY_F1	133
 #define KEY_F4	138
 #define KEY_F2	137
@@ -50,19 +51,20 @@
 #define KEY_HELP	140
 #define KEY_F7	136
 
-const int VK_LEFT  = 157;
-const int VK_RIGHT = 29;
-const int VK_UP    = 145;
-const int VK_DOWN  = 17;
-const int VK_HOME  = 19;
-const int VK_S	   = 83;
-
 const int VK_ESC = 95;
 const int VK_DEL = 20;
 const int VK_RETURN = 13;
 const int VK_SHIFT_RETURN = 141;
 const int VK_MOUNT = 205; // SHIFT-M
 const int VK_MOUNT_START = 77; // M
+const int VK_STAR = 42; //*
+
+const int VK_LEFT  = 157;
+const int VK_RIGHT = 29;
+const int VK_UP    = 145;
+const int VK_DOWN  = 17;
+const int VK_HOME  = 19;
+const int VK_S	   = 83;
 
 extern CLogger *logger;
 #ifdef WITH_NET
@@ -81,7 +83,7 @@ extern u32 prgSizeLaunch;
 //increasing size of prgDataLaunch so that we
 //can either store a prg or a crt in it
 //unsigned char prgDataLaunch[ 65536 ] AAA;
-extern unsigned char prgDataLaunch[ 1027*1024 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*12 ] AAA;
 
 
 static const char DRIVE[] = "SD:";
@@ -91,7 +93,7 @@ u8 c64screen[ 40 * 25 + 1024 * 4 ];
 u8 c64color[ 40 * 25 + 1024 * 4 ]; 
 
 boolean errorSticky = false;
-char *errorMsg = NULL;
+const char *errorMsg = NULL;
 
 char errorMessages[5][41] = {
 //   1234567890123456789012345678901234567890
@@ -132,8 +134,8 @@ int subHasLaunch = -1;
 
 void clearC64()
 {
-	memset( c64screen, ' ', 40 * 25 );
-	memset( c64color, 0, 40 * 25 );
+	memset( c64screen, ' ', 1024 );
+	memset( c64color, 0, 1024 );
 }
 
 u8 PETSCII2ScreenCode( u8 c )
@@ -860,7 +862,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 			handleC64( 0xffffffff, launchKernel, FILENAME, filenameKernal );
 			return;
 		}
-		if ( k == 42 ) // star
+		if ( k == VK_STAR)
 		{
 			if (pSidekickNet->IsRunning() && strcmp(netSktpHostName,"") != 0)
 			{
@@ -1123,7 +1125,7 @@ void printMainMenu()
 	//               "012345678901234567890123456789012345XXXX"
 	printC64( 0,  1, "   .- Sidekick264 - Frenetic -.         ", skinValues.SKIN_MENU_TEXT_HEADER, 0 );
 
-	extern u8 c64screen[ 40 * 25 + 1024 * 4 ]; 
+	//extern u8 c64screen[ 40 * 25 + 1024 * 4 ]; 
 
 	if ( subGeoRAM )
 	{
@@ -1755,10 +1757,13 @@ boolean isAutomaticScreenRefreshNeeded(){
 }
 
 void resetF7BrowserState(){
-	typeInName = cursorPos = scrollPos = lastLine = 0;
-	lastRolled = lastSubIndex = -1;
-	extern void scanDirectories( char *DRIVE );
-	scanDirectories( (char *)DRIVE );
+	
+	if ( nDirEntries > 6){ // >6 --> something was expanded
+		typeInName = cursorPos = scrollPos = lastLine = 0;
+		lastRolled = lastScrolled = lastSubIndex = -1;
+		extern void scanDirectories( char *DRIVE );
+		scanDirectories( (char *)DRIVE );
+	}
 }
 
 #endif

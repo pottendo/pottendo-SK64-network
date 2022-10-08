@@ -241,7 +241,7 @@ void activateCart()
 	#ifdef WITH_NET
 	if (pSidekickNet != 0)
 		pSidekickNet->setCurrentKernel( (char*)"m" );	
-		#endif
+	#endif
 
 	if ( screenType == 0 )
 	{
@@ -325,7 +325,7 @@ boolean CKernelMenu::Initialize( void )
 
 	u32 size = 0;
 
-#if 1
+#ifndef WITH_NET_DEBUG
 	u8 tempHDMI[ 640 * 480 * 3 ];
 	readFile( logger, (char*)DRIVE, (char*)FILENAME_SPLASH_HDMI, tempHDMI, &size );
 	u32 xOfs = ( screen->GetWidth() - 640 ) / 2;
@@ -528,14 +528,16 @@ boolean CKernelMenu::handleNetwork( boolean doRender)
 	if ( doRender ){
 		renderC64(); //puts the active menu page into the raspi memory
 		warmCache( (void*)this->FIQHandler );
-		//doCacheWellnessTreatment();
+		doCacheWellnessTreatment();
+		CACHE_PRELOAD_DATA_CACHE( c64screen, 1024, CACHE_PRELOADL2STRM );
+		CACHE_PRELOAD_DATA_CACHE( c64color, 1024, CACHE_PRELOADL2STRM );
 	}
 	m_timeStampOfLastNetworkEvent = 0;
 	
 	if (m_SidekickNet.usesWLAN()) // && !modeC128)
 		delayHandleNetworkValue = m_SidekickNet.isWebserverRunning() ? 850000 : 900000; //, 850000 maybe, also check F7 browser
 	//else if (m_SidekickNet.usesWLAN() && modeC128)
-	//	delayHandleNetworkValue = 1200000;
+	delayHandleNetworkValue = 1200000;
 	if ( m_SidekickNet.isSKTPScreenActive())
 		delayHandleNetworkValue = 900000;
 	
@@ -636,10 +638,8 @@ void CKernelMenu::Run( void )
 			//handleC64 - processes the key the user has pressed to determine how 
 			//the screen has to change (e.g. jump from page a to page b)
 			handleC64( lastChar, &launchKernel, FILENAME, filenameKernal );
-			lastChar = 0xfffffff;
 			renderC64();
 			warmCache( (void*)this->FIQHandler );
-			c64screen[0]=lastChar&255;
 			#endif
 			/*char tt[64];
 			static int lastPrintChar = 0;
@@ -694,9 +694,10 @@ void CKernelMenu::Run( void )
 		#ifdef WITH_NET
 				handleNetwork( true );
 		#endif
-				
+
 				CACHE_PRELOAD_DATA_CACHE( c64screen, 1024, CACHE_PRELOADL2STRM );
 				CACHE_PRELOAD_DATA_CACHE( c64color, 1024, CACHE_PRELOADL2STRM );
+				
 				// trigger IRQ on C16/+4 which tells the menu code that the new screen is ready
 				DELAY( 1 << 17 );
 				CLR_GPIO( bNMI );
@@ -706,6 +707,7 @@ void CKernelMenu::Run( void )
 		#ifdef WITH_NET
 		else
 		{
+			//update menu is zero and we go in here...
 			boolean timedRefresh = false;
 			if ( isAutomaticScreenRefreshNeeded() )
 			{
@@ -731,14 +733,15 @@ void CKernelMenu::Run( void )
 					doneWithHandling = 0;
 					updateMenu = 1;
 					//logger->Write( "SidekickMenu", LogNotice, "timed refresh happening" );
+					CACHE_PRELOAD_DATA_CACHE( c64screen, 1024, CACHE_PRELOADL2STRM );
+					CACHE_PRELOAD_DATA_CACHE( c64color, 1024, CACHE_PRELOADL2STRM );
 					renderC64(); //puts the active menu page into the raspi memory
 					doCacheWellnessTreatment();
-					//CACHE_PRELOAD_DATA_CACHE( c64screen, 1024, CACHE_PRELOADL2STRM );
-					//CACHE_PRELOAD_DATA_CACHE( c64color, 1024, CACHE_PRELOADL2STRM );
 					// trigger IRQ on C16/+4 which tells the menu code that the new screen is ready
 					DELAY( 1 << 17 );
-					enableFIQInterrupt();
 					CLR_GPIO( bNMI );
+					pullIRQ = 64;
+					enableFIQInterrupt();
 					doneWithHandling = 1;
 					updateMenu = 0;
 					keepNMILow = 2; //this means the duration of NMI going down is a little longer
@@ -767,8 +770,9 @@ void CKernelMenu::Run( void )
 					renderC64(); //puts the active menu page into the raspi memory
 					doCacheWellnessTreatment();
 					enableFIQInterrupt();
+					DELAY( 1 << 17 );
 					CLR_GPIO( bNMI );
- 
+					pullIRQ = 64;
 					doneWithHandling = 1;
 					updateMenu = 0;
 					keepNMILow = 2; //this means the duration of NMI going down is a little longer
@@ -778,7 +782,9 @@ void CKernelMenu::Run( void )
 				){
 					if ( handleNetwork( false)) //this makes the webserver respond quickly even when there is no keypress user action
 					{
+						DELAY( 1 << 17 );
 						CLR_GPIO( bNMI );
+						pullIRQ = 64;
 						keepNMILow = 2; //this means the duration of NMI going down is a little longer
 					}
 				}
