@@ -102,7 +102,7 @@ extern u32 prgSizeLaunch;
 //unsigned char prgDataLaunch[ 65536 ] AAA;
 //example: easy flash maniac mansion mercury crt
 //has a size of 1.050.688 Bytes
-extern unsigned char prgDataLaunch[ 1027*1024 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*12 ] AAA;
 
 
 static const char DRIVE[] = "SD:";

@@ -72,7 +72,7 @@ static const char NTPServer[]    = "pool.ntp.org";
 static const int nTimeZone       = 1*60;		// minutes diff to UTC
 static const char DRIVE[] = "SD:";
 //nDocMaxSize reserved 5 MB as the maximum size of the kernel file
-static const unsigned nDocMaxSize = 5000*1024;
+static const unsigned nDocMaxSize = 1027*1024*12-16;
 
 static const char CSDB_HOST[] = "csdb.dk";
 
@@ -97,7 +97,7 @@ const u8 WEBUPLOADPRG[] =
 
 //temporary hack
 extern u32 prgSizeLaunch;
-extern unsigned char prgDataLaunch[ 1027*1024*5 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*12 ] AAA;
 
 extern int fileExists( CLogger *logger, const char *DRIVE, const char *FILENAME );
 

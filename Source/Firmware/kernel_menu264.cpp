@@ -68,7 +68,7 @@ u32 prgSizeLaunch AAA;
 //increasing size of prgDataLaunch so that we
 //can either store a prg or a crt in it
 //unsigned char prgDataLaunch[ 65536 ] AAA;
-unsigned char prgDataLaunch[ 1027*1024 ] AAA;
+unsigned char prgDataLaunch[ 1027*1024*12 ] AAA;
 
 
 u32 prgCurSize = 0;

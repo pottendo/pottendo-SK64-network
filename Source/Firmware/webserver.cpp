@@ -35,7 +35,7 @@ static const char FILENAME_CONFIG[] = "SD:C64/sidekick64.cfg";
 static const char DRIVE[] = "SD:";
 
 extern u32 prgSizeLaunch;
-extern unsigned char prgDataLaunch[ 1027*1024*5 ] AAA;
+extern unsigned char prgDataLaunch[ 1027*1024*12 ] AAA;
 
 // our content
 static const char s_Index[] =
