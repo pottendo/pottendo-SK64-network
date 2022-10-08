@@ -128,14 +128,6 @@ ifeq ($(kernel), kernal)
 OBJS += kernel_kernal.o 
 endif
 
-#ifeq ($(kernel), render)
-#OBJS += kernel_render.o net.o
-#CPPFLAGS += -DWITH_RENDER
-#LIBS	= $(CIRCLEHOME)/lib/net/libnet.a \
-#        $(CIRCLEHOME)/addon/wlan/hostap/wpa_supplicant/libwpa_supplicant.a \
-#        $(CIRCLEHOME)/addon/wlan/libwlan.a
-#endif
-
 ifeq ($(kernel), ef)
 OBJS += kernel_ef.o crt.o 
 endif
