@@ -944,10 +944,10 @@ void CKernelMODplay::Run( void )
 
 		#ifdef WITH_NET
 				//this is a hack for the network kernel to pass mod data over from memory
-				if ( prgSizeExt > 0 )
+				if ( hasData )
 				{
 					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
-					wavMemory = prgDataExt;
+					memcpy(wavMemory, prgDataExt, prgSizeExt);
 					mod_size = prgSizeExt;
 				}
 				else
@@ -1030,10 +1030,10 @@ void CKernelMODplay::Run( void )
 	{
 		#ifdef WITH_NET
 				//this is a hack for the network kernel to pass mod data over from memory
-				if ( prgSizeExt > 0 )
+				if ( hasData )
 				{
 					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
-					wavMemory = prgDataExt;
+					memcpy(wavMemory, prgDataExt, prgSizeExt);
 					mod_size = prgSizeExt;
 				}
 				else
@@ -1051,10 +1051,10 @@ void CKernelMODplay::Run( void )
 	{
 		#ifdef WITH_NET
 				//this is a hack for the network kernel to pass mod data over from memory
-				if ( prgSizeExt > 0 )
+				if ( hasData )
 				{
 					if ( prgSizeExt > (WAV_MEMSIZE_KB-256) * 1024 ) return;
-					wavMemory = prgDataExt;
+					memcpy(wavMemory, prgDataExt, prgSizeExt);
 					mod_size = prgSizeExt;
 				}
 				else
