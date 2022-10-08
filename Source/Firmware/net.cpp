@@ -319,21 +319,25 @@ boolean CSidekickNet::Initialize()
 	m_TLSSupport = new CTLSSimpleSupport (m_Net);
 #endif
 
-	//TODO: the resolves could be postponed to the moment where the first 
-	//actual access takes place
 	bool success = false;
 	
 	m_CSDB.hostName = CSDB_HOST;
 	m_CSDB.port = 443;
-	m_CSDB.ipAddress = getIPForHost( CSDB_HOST, success );
+	m_CSDB.attempts = 0;
+	m_CSDB.valid = false;
 	m_CSDB.logPrefix = getLoggerStringForHost( CSDB_HOST, 443);
-	m_CSDB.valid = success;
 
 	m_CSDB_HVSC.hostName = "hvsc.csdb.dk";
 	m_CSDB_HVSC.port = 443;
-	m_CSDB_HVSC.ipAddress = getIPForHost( m_CSDB_HVSC.hostName, success );
+	m_CSDB_HVSC.attempts = 0;
+	m_CSDB_HVSC.valid = false;
 	m_CSDB_HVSC.logPrefix = getLoggerStringForHost( m_CSDB_HVSC.hostName, 443);
-	m_CSDB_HVSC.valid = success;
+
+	m_ModarchiveAPI.hostName = "api.modarchive.org";
+	m_ModarchiveAPI.port = 443;
+	m_ModarchiveAPI.attempts = 0;
+	m_ModarchiveAPI.valid = false;
+	m_ModarchiveAPI.logPrefix = getLoggerStringForHost( m_ModarchiveAPI.hostName, 443);
 
 	m_NTPServerIP  = getIPForHost( NTPServer, success );
 
@@ -342,9 +346,11 @@ boolean CSidekickNet::Initialize()
 		int port = netSktpHostPort != 0 ? netSktpHostPort: HTTP_PORT;
 		m_SKTPServer.hostName = netSktpHostName;
 		m_SKTPServer.port = port;
-		m_SKTPServer.ipAddress = getIPForHost( netSktpHostName, success );
+		m_SKTPServer.attempts = 0;
+		m_SKTPServer.valid = false;
+		//m_SKTPServer.ipAddress = getIPForHost( netSktpHostName, success );
 		m_SKTPServer.logPrefix = getLoggerStringForHost( netSktpHostName, port);
-		m_SKTPServer.valid = success;
+		m_SKTPServer.valid = false;
 	}
 	else
 	{
@@ -795,14 +801,26 @@ char * CSidekickNet::getCSDBDownloadFilename(){
 	return (char *) m_CSDBDownloadFilename;
 }
 
+boolean CSidekickNet::isLibOpenMPTFileType(char * x){
+	return ( 
+		strcmp(x,"mod") == 0 ||
+		strcmp(x,"xm") == 0 ||
+		strcmp(x,"it") == 0 ||
+		strcmp(x,"ym") == 0 ||
+		strcmp(x,"med") == 0 ||
+		strcmp(x,"sfx") == 0 ||
+		strcmp(x,"s3m") == 0 ||
+		strcmp(x,"hvl") == 0 ||
+		strcmp(x,"dbm") == 0 ||
+		strcmp(x,"ptm") == 0 ||
+		strcmp(x,"mptm") == 0 ||
+		strcmp(x,"wav") == 0
+	);
+}
+
 u8 CSidekickNet::getCSDBDownloadLaunchType(){
 	u8 type = 0;
-	if ( strcmp(m_CSDBDownloadExtension,"mod") == 0 ||
-		strcmp(m_CSDBDownloadExtension,"xm") == 0 ||
-		strcmp(m_CSDBDownloadExtension,"it") == 0 ||
-		strcmp(m_CSDBDownloadExtension,"ym") == 0 ||
-		strcmp(m_CSDBDownloadExtension,"wav") == 0
-	)	
+	if ( isLibOpenMPTFileType(m_CSDBDownloadExtension) )	
 	{
 		type = 42;
 	}
@@ -1165,13 +1183,6 @@ boolean CSidekickNet::checkForFinishedDownload()
 				setErrorMsgC64((char*)"             Saving SID file            ", false);
 //				setErrorMsgC64((char*)"     Saving and launching SID file      ");
 			}
-			else if ( strcmp( m_CSDBDownloadExtension, "mod" ) == 0 || 
-								strcmp( m_CSDBDownloadExtension, "xm" ) == 0 ||
-								strcmp( m_CSDBDownloadExtension, "it" ) == 0 )
-			{
-				//                    "012345678901234567890123456789012345XXXX"
-				setErrorMsgC64((char*)"             Saving MOD file            ", false);
-			}
 			else if ( strcmp( m_CSDBDownloadExtension, "ym" ) == 0)
 			{
 				//                    "012345678901234567890123456789012345XXXX"
@@ -1181,6 +1192,11 @@ boolean CSidekickNet::checkForFinishedDownload()
 			{
 				//                    "012345678901234567890123456789012345XXXX"
 				setErrorMsgC64((char*)"             Saving WAV file            ", false);
+			}
+			else if ( isLibOpenMPTFileType(m_CSDBDownloadExtension) )
+			{
+				//                    "012345678901234567890123456789012345XXXX"
+				setErrorMsgC64((char*)"             Saving MOD file            ", false);
 			}
 			else if ( strcmp( m_CSDBDownloadExtension, "crt" ) == 0)
 			{
@@ -1325,12 +1341,8 @@ void CSidekickNet::drawTGAImageOnTFT(){
 
 void CSidekickNet::getCSDBBinaryContent( ){
 	assert (m_isActive);
-	unsigned iFileLength = 0;
-	unsigned char prgDataLaunchTemp[ 1027*1024 ]; // TODO do we need this?
-	if ( HTTPGet ( m_CSDBDownloadHost, (char *) m_CSDBDownloadPath, (char *) prgDataLaunchTemp, iFileLength)){
-		if (m_loglevel > 3)
-			logger->Write( "getCSDBBinaryContent", LogNotice, "Got stuff via HTTPS, now doing memcpy");
-		memcpy( prgDataLaunch, prgDataLaunchTemp, iFileLength);
+	u32 iFileLength = 0;
+	if ( HTTPGet ( m_CSDBDownloadHost, (char *) m_CSDBDownloadPath, (char *) prgDataLaunch, iFileLength)){
 		prgSizeLaunch = iFileLength;
 		m_isDownloadReady = true;
 		if (m_loglevel > 3)
@@ -1379,7 +1391,7 @@ boolean CSidekickNet::launchSktpSession(){
 			urlSuffix.Append(netSktpHostPassword);
 		}
 	}
-	urlSuffix.Append("&sktpv=4&type=");
+	urlSuffix.Append("&sktpv=5&type=");
 	#ifndef IS264
 	if (m_isC128)
 		urlSuffix.Append("128");
@@ -1504,6 +1516,10 @@ void CSidekickNet::parseSKTPDownloadCommand( char * pResponseBuffer, unsigned of
 	else if ( strcmp(hostName, m_SKTPServer.hostName) == 0){
 		m_CSDBDownloadHost = m_SKTPServer;
 	}
+	else if ( strcmp(hostName, m_ModarchiveAPI.hostName) == 0){
+		//logger->Write( "parseSKTPDownloadCommand", LogNotice, "MODARCHIVE: >%s<", hostName);
+		m_CSDBDownloadHost = m_ModarchiveAPI;
+	}
 	else{
 		logger->Write( "parseSKTPDownloadCommand", LogNotice, "Error: Unknown host: >%s<", hostName);
 		m_CSDBDownloadHost = m_CSDB;
@@ -1542,7 +1558,7 @@ void CSidekickNet::updateSktpScreenContent(){
 			m_sktpScreenErrorCode = 3;
 			return;
 		}
-		else if (!m_SKTPServer.valid)
+		else if (strlen(m_SKTPServer.hostName) == 0 )
 		{
 			m_sktpScreenErrorCode = 1;
 			return;
@@ -1643,12 +1659,7 @@ void CSidekickNet::setSavePath(char * subfolder)
 		savePath.Append( (const char *) "KERNAL/" );
 	else if ( strcmp(m_CSDBDownloadExtension,"sid") == 0)
 		savePath.Append( (const char *) "SID/" );
-	else if ( strcmp(m_CSDBDownloadExtension,"mod") == 0 ||
-				strcmp(m_CSDBDownloadExtension,"ym") == 0 ||
-				strcmp(m_CSDBDownloadExtension,"xm") == 0 ||
-				strcmp(m_CSDBDownloadExtension,"it") == 0 ||
-				strcmp(m_CSDBDownloadExtension,"wav") == 0
-	)
+	else if ( isLibOpenMPTFileType(m_CSDBDownloadExtension))
 		savePath.Append( (const char *) "MUSIC/" );
 	savePath.Append(subfolder);
 	
@@ -1816,6 +1827,27 @@ boolean CSidekickNet::HTTPGet (remoteHTTPTarget & target, const char * path, cha
 	unsigned nLength = nDocMaxSize;
 	if (m_loglevel > 3)
 		logger->Write( "HTTPGet", LogNotice, target.logPrefix, path );
+	//check if we need to resolve the target
+	if ( !target.valid)
+	{
+		if ( target.attempts <= 3)
+		{
+			bool success = false;
+			target.ipAddress = getIPForHost( target.hostName, success );
+			target.valid = success;
+			target.attempts++;
+			if (!success)
+			{
+				logger->Write( "HTTPGet", LogError, "Resolve of hostname '%s' failed - attempt %u", target.hostName, target.attempts);
+				return false;
+			}
+		}
+		else{
+			logger->Write( "HTTPGet", LogError, "Resolve of hostname '%s' failed too many times", target.hostName);
+			return false;
+		}
+	}
+	
 #ifdef WITH_TLS	
 	CHTTPClient client( m_TLSSupport, target.ipAddress, target.port, target.hostName, target.port == 443 );
 	CircleMbedTLS::THTTPStatus Status = client.Get (path, (u8 *) pBuffer, &nLength);

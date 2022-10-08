@@ -113,6 +113,7 @@ public:
 	void handleQueuedNetworkAction();
 	void drawTGAImageOnTFT();
 	void getCSDBBinaryContent();
+	boolean isLibOpenMPTFileType( char *);
 	u8 getCSDBDownloadLaunchType();
 	boolean isAnyNetworkActionQueued();
 	void saveDownload2SD();
@@ -192,6 +193,7 @@ private:
 		CIPAddress ipAddress;
 		CString logPrefix;
 		bool valid;
+		u8 attempts;
 	} remoteHTTPTarget;
 	
 	typedef enum {
@@ -313,6 +315,7 @@ private:
 	remoteHTTPTarget m_SKTPServer;
 	remoteHTTPTarget m_CSDB;
 	remoteHTTPTarget m_CSDB_HVSC;
+	remoteHTTPTarget m_ModarchiveAPI;
 };
 
 #endif
