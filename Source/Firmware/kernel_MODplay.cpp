@@ -396,7 +396,6 @@ void computeSamplesAndScreenUpdate( u16 vol )
 		}
 		#endif
 
-		int bytesToRender = 512 * sizeof( float ) * 2;
 		float globalVolume = (float)vol / 256.0f;
 		float sampleLeft, sampleRight;
 
@@ -406,6 +405,7 @@ void computeSamplesAndScreenUpdate( u16 vol )
 		std::vector<float> right( buffersize );	
 		rendered_samples = mod->read( MOD_sampleRate, buffersize, left.data(), right.data());
 #else
+		int bytesToRender = 512 * sizeof( float ) * 2;
 		int rendered_bytes = pocketmod_render(&context, buffer, stats, bytesToRender );
 		rendered_samples = rendered_bytes / sizeof(float[2]);
 #endif		
@@ -582,18 +582,22 @@ void computeSamplesAndScreenUpdate( u16 vol )
 			context.line = mod->get_current_row();
 			context.pattern = mod->get_current_pattern();
 			context.ticks_per_line = mod->get_current_speed();
+			context.length = mod->get_num_patterns();
 			#endif
 			
 			if ( prevLine != context.line )
 			{
 				prevLine = context.line;
-				sprintf( buf, "%02d", maxsk( 0, context.line ) );
+				sprintf( buf, "%03d", maxsk( 0, context.line ) );
 				printSpriteLayer( fb, buf, 80, 78+5 );
 			}
 
 			if ( prevPatt != context.pattern )
 			{
-				sprintf( buf, "%02d", context.pattern );
+				if ( context.length > 99 )
+					sprintf( buf, "%03d", context.pattern );
+				else
+					sprintf( buf, "%02d", context.pattern );
 				printSpriteLayer( fb, buf, 80, 70+5 );
 			}
 
@@ -1107,10 +1111,13 @@ void CKernelMODplay::Run( void )
 		sprintf( buf, "Samples:  %d", context.used_num_samples );
 		printSpriteLayer( fb, buf, 0, 58+5 );
 
-		sprintf( buf, "Position: %02d", context.line );
+		sprintf( buf, "Position: %03d", context.line );
 		printSpriteLayer( fb, buf, 0, 78+5 );
 
-		sprintf( buf, "Pattern:  %02d/%02d", context.pattern, context.length );
+		if ( context.length > 99 )
+			sprintf( buf, "Pattern:  %03d/%03d", context.pattern, context.length );
+		else
+			sprintf( buf, "Pattern:  %02d/%02d", context.pattern, context.length );
 		printSpriteLayer( fb, buf, 0, 70+5 );
 
 		sprintf( buf, "Speed:    %02d", context.ticks_per_line );
