@@ -1014,7 +1014,7 @@ void CKernelMODplay::Run( void )
 			std::vector<float> left( buffersize );
 			std::vector<float> right( buffersize );	
 			int rendered_samples;
-			while ( rendered_samples = mod->read( MOD_sampleRate, buffersize, left.data(), right.data()) > 0)
+			while ( rendered_samples = mod->read( MOD_SCAN_sampleRate, buffersize, left.data(), right.data()) > 0)
 			{
 				for ( int i = 0; i < rendered_samples; i++) 
 				{
