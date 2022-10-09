@@ -382,19 +382,22 @@ void computeSamplesAndScreenUpdate( u16 vol )
 
 	if ( playFileType == 0 )
 	{
-		#ifndef LIBOPENMPT
-		//TODO: use set_position_order_row()
-		
 		if ( modJumpTo > -1 )
 		{
+#ifndef LIBOPENMPT
 			memcpy( &context, &modJumpContext[ modJumpTo ], sizeof( pocketmod_context ) );
 			context.samples_per_second = MOD_sampleRate;
 			context.samples_per_tick *= (float)MOD_sampleRate / (float)MOD_SCAN_sampleRate;
 			for ( int i = 0; i < context.num_channels; i++ )
 				context.channels[ i ].increment *= (float)MOD_SCAN_sampleRate / (float)MOD_sampleRate;
+#else
+			u8 co = mod->get_current_order();
+			if ( modJumpTo == 1 && co < mod->get_num_orders()) co++;
+			else if ( modJumpTo == 2 && co > 0) co--;
+			double tmp = mod->set_position_order_row(co,0);
+#endif
 			modJumpTo = -1;
 		}
-		#endif
 
 		float globalVolume = (float)vol / 256.0f;
 		float sampleLeft, sampleRight;
@@ -580,9 +583,9 @@ void computeSamplesAndScreenUpdate( u16 vol )
 
 			#ifdef LIBOPENMPT
 			context.line = mod->get_current_row();
-			context.pattern = mod->get_current_pattern();
+			context.pattern = mod->get_current_order();
 			context.ticks_per_line = mod->get_current_speed();
-			context.length = mod->get_num_patterns();
+			context.length = mod->get_num_orders();
 			#endif
 			
 			if ( prevLine != context.line )
@@ -1088,8 +1091,8 @@ void CKernelMODplay::Run( void )
 		context.num_channels = mod->get_num_channels();
 		context.used_num_samples = mod->get_num_samples();
 		context.line = mod->get_current_row();
-		context.length= mod->get_num_patterns();
-		context.pattern = mod->get_current_pattern();
+		context.length= mod->get_num_orders();
+		context.pattern = mod->get_current_order();
 		context.ticks_per_line = mod->get_current_speed();
 		#endif
 
@@ -1724,8 +1727,12 @@ void CKernelMODplay::FIQHandler (void *pParam)
 		{
 			if ( playFileType == 0 )
 			{
+#ifndef LIBOPENMPT
 				if ( context.pattern < context.length - 1 )
 					modJumpTo = context.pattern + 1;
+#else
+				modJumpTo = 1;
+#endif
 			} else
 			{
 				modJumpTo = 1;
@@ -1735,8 +1742,12 @@ void CKernelMODplay::FIQHandler (void *pParam)
 		{
 			if ( playFileType == 0 )
 			{
+#ifndef LIBOPENMPT
 				if ( context.pattern > 0 )
 					modJumpTo = context.pattern - 1;
+#else
+				modJumpTo = 2;
+#endif
 			} else
 			{
 				modJumpTo = 2;
