@@ -54,9 +54,12 @@ struct fake_context
     unsigned char num_patterns; /* Patterns in the file (1..128)           */
     unsigned char num_samples;  /* Sample count (15 or 31)                 */
     unsigned char num_channels; /* Channel count (1..32)                   */
+		unsigned char pattern_num_rows;
     unsigned char used_num_samples; //hacked in by frntc
     int ticks_per_line;         /* A.K.A. song speed (initially 6)         */
+		int bpm;
     signed char pattern;        /* Current pattern in order                */
+		signed char pattern2;       /* Current pattern in order                */
     signed char line;           /* Current line in pattern                 */
     short tick;                 /* Current tick in line                    */
     float sample;               /* Current sample in tick                  */
@@ -384,17 +387,17 @@ void computeSamplesAndScreenUpdate( u16 vol )
 	{
 		if ( modJumpTo > -1 )
 		{
-#ifndef LIBOPENMPT
+#ifdef LIBOPENMPT
+			u8 co = mod->get_current_order();
+			if ( modJumpTo == 1 && co < mod->get_num_orders()) co++;
+			else if ( modJumpTo == 2 && co > 0) co--;
+			double tmp = mod->set_position_order_row(co,0);
+#else
 			memcpy( &context, &modJumpContext[ modJumpTo ], sizeof( pocketmod_context ) );
 			context.samples_per_second = MOD_sampleRate;
 			context.samples_per_tick *= (float)MOD_sampleRate / (float)MOD_SCAN_sampleRate;
 			for ( int i = 0; i < context.num_channels; i++ )
 				context.channels[ i ].increment *= (float)MOD_SCAN_sampleRate / (float)MOD_sampleRate;
-#else
-			u8 co = mod->get_current_order();
-			if ( modJumpTo == 1 && co < mod->get_num_orders()) co++;
-			else if ( modJumpTo == 2 && co > 0) co--;
-			double tmp = mod->set_position_order_row(co,0);
 #endif
 			modJumpTo = -1;
 		}
@@ -585,30 +588,47 @@ void computeSamplesAndScreenUpdate( u16 vol )
 			context.line = mod->get_current_row();
 			context.pattern = mod->get_current_order();
 			context.ticks_per_line = mod->get_current_speed();
+			context.bpm = mod->get_current_estimated_bpm();
 			context.length = mod->get_num_orders();
+			if ( context.bpm > 180 ) context.bpm = context.bpm/2;
 			#endif
 			
 			if ( prevLine != context.line )
 			{
 				prevLine = context.line;
-				sprintf( buf, "%03d", maxsk( 0, context.line ) );
+				if (context.pattern_num_rows > 99)
+					sprintf( buf, "%03d", maxsk( 0, context.line ) );
+				else
+					sprintf( buf, "%02d", maxsk( 0, context.line ) );
 				printSpriteLayer( fb, buf, 80, 78+5 );
 			}
 
 			if ( prevPatt != context.pattern )
 			{
-				if ( context.length > 99 )
+				
+				if ( context.length > 99)
 					sprintf( buf, "%03d", context.pattern );
 				else
 					sprintf( buf, "%02d", context.pattern );
 				printSpriteLayer( fb, buf, 80, 70+5 );
+
+				context.pattern2 = mod->get_current_pattern();
+				context.pattern_num_rows = mod->get_pattern_num_rows(context.pattern2);
+				
+				if ( context.num_patterns > 99)
+					sprintf( buf, "%03d", context.pattern2 );
+				else
+					sprintf( buf, "%02d", context.pattern2 );
+				printSpriteLayer( fb, buf, 80 + 16*( context.length > 99 ? 1: 0) + 48 , 70+5 );
+
+				prevPatt = context.pattern;
 			}
 
 			//song speed
 			if ( prevSpeed != context.ticks_per_line )
 			{
 				prevSpeed = context.ticks_per_line;
-				sprintf( buf, "%02d", context.ticks_per_line );
+				sprintf( buf, "%02d %03d", context.ticks_per_line, context.bpm );
 				printSpriteLayer( fb, buf, 80, 86+5 );
 			}
 		} else
@@ -1089,11 +1109,16 @@ void CKernelMODplay::Run( void )
 		#ifdef LIBOPENMPT
 		context.source = (unsigned char *) mod->get_metadata("title").c_str();
 		context.num_channels = mod->get_num_channels();
+		context.num_patterns = mod->get_num_patterns();
 		context.used_num_samples = mod->get_num_samples();
 		context.line = mod->get_current_row();
 		context.length= mod->get_num_orders();
 		context.pattern = mod->get_current_order();
+		context.pattern2 = mod->get_current_pattern();
 		context.ticks_per_line = mod->get_current_speed();
+		context.bpm = mod->get_current_estimated_bpm();
+		context.pattern_num_rows = mod->get_pattern_num_rows(context.pattern2);
+		if ( context.bpm > 180 ) context.bpm = context.bpm/2;
 		#endif
 
 		char buf[ 32 ];
@@ -1114,11 +1139,11 @@ void CKernelMODplay::Run( void )
 		sprintf( buf, "Samples:  %d", context.used_num_samples );
 		printSpriteLayer( fb, buf, 0, 58+5 );
 
-		sprintf( buf, "Position: %03d", context.line );
+		sprintf( buf, "Position: %02d", context.line ); //will be widened to 3 if necessary
 		printSpriteLayer( fb, buf, 0, 78+5 );
 
-		if ( context.length > 99 )
-			sprintf( buf, "Pattern:  %03d/%03d", context.pattern, context.length );
+		if ( context.length > 99 || context.num_patterns > 99 )
+			sprintf( buf, "Pattern:  %03d/%03d %03d/%03d", context.pattern, context.length, context.pattern2, context.num_patterns );
 		else
 			sprintf( buf, "Pattern:  %02d/%02d", context.pattern, context.length );
 		printSpriteLayer( fb, buf, 0, 70+5 );
