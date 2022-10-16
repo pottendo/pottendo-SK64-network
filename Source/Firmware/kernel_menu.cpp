@@ -448,7 +448,7 @@ boolean CKernelMenu::Initialize( void )
 	globalMemoryAllocation();
 
 #ifdef WITH_NET
-		logger->Write ("SidekickKernel", LogNotice, "Compiled on: " COMPILE_TIME ", Git branch: " GIT_BRANCH ", Git hash: " GIT_HASH);
+		//logger->Write ("SidekickKernel", LogNotice, "Compiled on: " COMPILE_TIME ", Git branch: " GIT_BRANCH ", Git hash: " GIT_HASH);
 		//TODO: this should be done in constructor of SideKickNet
 		m_SidekickNet.checkForSupportedPiModel();
 		m_SidekickNet.mountSDDrive();
