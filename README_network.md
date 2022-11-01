@@ -53,8 +53,8 @@ Once network features were squeezed into the "clockwork" of Sidekick64 without d
 ## Summary: Network features in a nutshell
 Currently the following network related features are offered by the experimental Sidekick64 network kernel:
 * Join your network, obtain IP address (DHCP mandatory)
-* Cable based LAN (RPI 3B+ only) and WLAN are both possible. There is one kernel image for WLAN and one image for cable based ethernet.
-* WLAN-Kernel: Store WLAN SSID and passphrase in configuration file on SD card
+* Cable based LAN (RPI 3B+ only) and WLAN are both possible. There is one kernel image for both WLAN and cable based ethernet.
+* For WLAN, store WLAN SSID and passphrase in configuration file on SD card
 * System date and time will be set via NTP (UTC)
 * A network connection can be established by the user via keypress at the Sidekick menu when needed or can be configured to be automatically done during each Sidekick64 boot.
 * Web interface
