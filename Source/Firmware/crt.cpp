@@ -890,7 +890,7 @@ int checkCRTFile( CLogger *logger, const char *DRIVE, const char *FILENAME, u32 
 		case 19: // MagicDesk CRT
 		case 0:  // normal cartridge
 		case 15: // C64 Game System
-		case 60: // C64 Game System
+		case 60: // GMOD2
 		case 18: // Zaxxon
 		case 43: // Prophet
 		case 5: // Ocean
