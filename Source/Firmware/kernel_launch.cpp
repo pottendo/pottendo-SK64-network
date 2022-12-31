@@ -210,7 +210,28 @@ void CKernelLaunch::Run( void )
 	{
 		char fn[ 1024 ];//, fnslide[ 1024*2 ];
 		bool customTGA = false;
-		if (strlen( FILENAME ) > 4 && !_playingPSID)
+
+		memset( fn, 0, 1024 );
+		if (strlen( FILENAME ) > 4)
+			strncpy( fn, FILENAME, strlen( FILENAME ) - 4 );
+		strcat( fn, "-slideshow.tga" );
+
+		if ( tftLoadSlideShowTGA( DRIVE, fn ) && tftSlideShowNImages > 0 )
+		{
+			customTGA = true;
+			showSlideShow = 1;
+			curSlideShowImage = tftSlideShowNImages - 1;
+			curCopyRow = curPixelRow = 0;
+			pauseSlideShow = 0;
+
+			fn[ strlen( fn ) - 3 ] = 0;
+			strcat( fn, "time" );
+			u32 size = 0;
+			for ( u32 i = 0; i < 32; i++ )
+				timeSlideShow[ i ] = 10;
+			readFile( logger, DRIVE, fn, timeSlideShow, &size, 32 );
+		}
+		else if (strlen( FILENAME ) > 4 && !_playingPSID)
 		{
 			if (1==2)
 			{
@@ -233,6 +254,7 @@ void CKernelLaunch::Run( void )
 				}
 			}
 		}
+
 		if (!customTGA)
 		{
 			tftLoadBackgroundTGA( DRIVE, FILENAME_SPLASH_RGB, 8 );
@@ -245,27 +267,7 @@ void CKernelLaunch::Run( void )
 			{
 				tftBlendRGBA( tempTGA, tftBackground, 0 );
 			}
-
 			tftCopyBackground2Framebuffer();
-		}
-
-		memset( fn, 0, 1024 );
-		strncpy( fn, FILENAME, strlen( FILENAME ) - 4 );
-		strcat( fn, "-slideshow.tga" );
-
-		if ( tftLoadSlideShowTGA( DRIVE, fn ) && tftSlideShowNImages > 0 )
-		{
-			showSlideShow = 1;
-			curSlideShowImage = tftSlideShowNImages - 1;
-			curCopyRow = curPixelRow = 0;
-			pauseSlideShow = 0;
-
-			fn[ strlen( fn ) - 3 ] = 0;
-			strcat( fn, "time" );
-			u32 size = 0;
-			for ( u32 i = 0; i < 32; i++ )
-				timeSlideShow[ i ] = 10;
-			readFile( logger, DRIVE, fn, timeSlideShow, &size, 32 );
 		}
 
 		tftInitImm();
