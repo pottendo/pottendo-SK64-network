@@ -1,4 +1,4 @@
-﻿/*
+/*
   _________.__    .___      __   .__        __       ___________.__                .__     
  /   _____/|__| __| _/____ |  | _|__| ____ |  | __   \_   _____/|  | _____    _____|  |__  
  \_____  \ |  |/ __ |/ __ \|  |/ /  |/ ___\|  |/ /    |    __)  |  | \__  \  /  ___/  |  \ 
@@ -39,6 +39,8 @@ extern char *FILENAME;
 #else
 static const char FILENAME[] = "SD:test.crt";
 #endif
+
+extern uint8_t m93c86_data[M93C86_SIZE]; //only needed for gmod2 eeprom
 
 static const char FILENAME_EAPI[] = "SD:C64/eapi.prg";
 
@@ -543,24 +545,25 @@ void CKernelEF::Run( void )
 	// read .CRT
 	ef.flash_cacheoptimized = (u8 *)( ( (u64)&flash_cacheoptimized_pool[ 0 ] + 128 ) & ~127 );
 	#ifdef COMPILE_MENU
+	u32 nBanks, romLH;
 	if ( !hasData )
 	{
 	#endif
-		u32 nBanks, romLH;
 		readCRTFile( logger, &header, (char*)DRIVE, (char*)FILENAME, (u8*)ef.flash_cacheoptimized, &ef.bankswitchType, &romLH, &nBanks, getRAW );
-		ef.ROM_LH = romLH; 	ef.nBanks = nBanks;
 	#ifdef COMPILE_MENU
 	}
 	else{
-		parseCRTInMemory( logger, &header, (u8*)ef.flash_cacheoptimized, &ef.bankswitchType, &ef.ROM_LH, &ef.nBanks, false, crtDataExt, crtSizeExt );
+		parseCRTInMemory( logger, &header, (u8*)ef.flash_cacheoptimized, &ef.bankswitchType, &romLH, &nBanks, false, crtDataExt, crtSizeExt );
 	}
+	ef.ROM_LH = romLH; 	ef.nBanks = nBanks;
 	#endif
 
-
-	ef.eapiCRTModified = 0;
+		ef.eapiCRTModified = 0;
 
 	// EAPI in EF CRT? replace
-	if ( ef.flash_cacheoptimized[ ADDR_LINEAR2CACHE(EAPI_OFFSET+0) * 2 + 1 ] == 0x65 &&
+	if ( 
+		 ef.bankswitchType == BS_EASYFLASH &&
+		 ef.flash_cacheoptimized[ ADDR_LINEAR2CACHE(EAPI_OFFSET+0) * 2 + 1 ] == 0x65 &&
 		 ef.flash_cacheoptimized[ ADDR_LINEAR2CACHE(EAPI_OFFSET+1) * 2 + 1 ] == 0x61 &&
 		 ef.flash_cacheoptimized[ ADDR_LINEAR2CACHE(EAPI_OFFSET+2) * 2 + 1 ] == 0x70 &&
 		 ef.flash_cacheoptimized[ ADDR_LINEAR2CACHE(EAPI_OFFSET+3) * 2 + 1 ] == 0x69 )
@@ -723,8 +726,44 @@ void CKernelEF::Run( void )
 
 	initEF();
 
-	DisableIRQs();
+	// different timing C64-longboards and C128 compared to 469-boards
+	ef.LONGBOARD = 0;
+	if ( modeC128 || modeVIC == 0 )
+		ef.LONGBOARD = 1; 
 
+	irqFallingEdge = true;
+
+	if ( ef.bankswitchType == BS_C64GS || ef.bankswitchType == BS_GMOD2 || ef.bankswitchType == BS_OCEAN || ef.bankswitchType == BS_HUCKY || ef.bankswitchType == BS_RGCD || ef.bankswitchType == BS_COMAL80 || ef.bankswitchType == BS_FUNPLAY || ef.bankswitchType == BS_EPYXFL || ef.bankswitchType == BS_SIMONSBASIC || ef.bankswitchType == BS_DINAMIC )
+		irqFallingEdge = false;
+
+	// determine how to and preload caches
+	if ( ef.bankswitchType == BS_MAGICDESK /*|| ef.bankswitchType == BS_GMOD2*/ )
+		ef.flashFitsInCache = ( ef.nBanks <= 64 ) ? 1 : 0; else // Magic Desk only uses ROML-banks -> different memory layout
+		ef.flashFitsInCache = ( ef.nBanks <= 32 ) ? 1 : 0;
+
+	// TODO
+	ef.flashFitsInCache = 0;
+	if ( ef.bankswitchType == BS_NONE || ef.bankswitchType == BS_ZAXXON || ef.bankswitchType == BS_FUNPLAY || ef.bankswitchType == BS_COMAL80 || ef.bankswitchType == BS_EPYXFL || ef.bankswitchType == BS_SIMONSBASIC || ef.bankswitchType == BS_DINAMIC )
+		ef.flashFitsInCache = 1;
+
+	if ( ef.bankswitchType == BS_HUCKY || ef.bankswitchType == BS_RGCD )
+		ef.reg0 = 7;
+
+	if ( ef.bankswitchType == BS_GMOD2 )
+	{
+		ef.flashFitsInCache = 0;
+		//extern uint8_t m93c86_data[M93C86_SIZE];
+		char fn[ 4096 ];
+		sprintf( fn, "%s.eeprom", FILENAME );
+		u32 size;
+//		extern CLogger *logger;
+		memset( m93c86_data, 0, 2048 );
+		readFile( logger, DRIVE, fn, m93c86_data, &size );
+		logger->Write( "RaspiFlash", LogNotice, "loaded gmod2 eeprom: '%s', %u", fn, size );
+		//logger->Write( "RaspiFlash", LogNotice, "eeprom content: '%s'", m93c86_data );
+	}
+
+	DisableIRQs();
 	// setup FIQ
 	TGPIOInterruptHandler *myHandler = FIQ_HANDLER;
 	#ifdef COMPILE_MENU
@@ -752,8 +791,6 @@ void CKernelEF::Run( void )
 		myHandler = KernelEFFIQHandler_EpyxFL;
 	if ( ef.bankswitchType == BS_SIMONSBASIC )
 		myHandler = KernelEFFIQHandler_SimonsBasic;
-
-
 	if ( ef.bankswitchType == BS_MAGICDESK )
 		myHandler = KernelMDOnlyFIQHandler;
 	#endif
@@ -780,31 +817,12 @@ void CKernelEF::Run( void )
 			m_InputPin.EnableInterrupt2( GPIOInterruptOnFallingEdge );
 	}
 
-	// determine how to and preload caches
-	if ( ef.bankswitchType == BS_MAGICDESK /*|| ef.bankswitchType == BS_GMOD2*/ )
-		ef.flashFitsInCache = ( ef.nBanks <= 64 ) ? 1 : 0; else // Magic Desk only uses ROML-banks -> different memory layout
-		ef.flashFitsInCache = ( ef.nBanks <= 32 ) ? 1 : 0;
-
-	// TODO
-	ef.flashFitsInCache = 0;
-	if ( ef.bankswitchType == BS_NONE || ef.bankswitchType == BS_ZAXXON || ef.bankswitchType == BS_FUNPLAY || ef.bankswitchType == BS_COMAL80 || ef.bankswitchType == BS_EPYXFL || ef.bankswitchType == BS_SIMONSBASIC || ef.bankswitchType == BS_DINAMIC )
-		ef.flashFitsInCache = 1;
-
-	if ( ef.bankswitchType == BS_HUCKY || ef.bankswitchType == BS_RGCD )
-		ef.reg0 = 7;
-
 	if ( ef.bankswitchType == BS_GMOD2 )
 	{
-		ef.flashFitsInCache = 0;
-		extern uint8_t m93c86_data[M93C86_SIZE];
-		char fn[ 4096 ];
-		sprintf( fn, "%s.eeprom", FILENAME );
-		u32 size;
-		extern CLogger *logger;
+		//extern uint8_t m93c86_data[M93C86_SIZE];
 		CACHE_PRELOAD_DATA_CACHE( m93c86_data, 2048, CACHE_PRELOADL1STRMW )
-		memset( m93c86_data, 0, 2048 );
-		readFile( logger, DRIVE, fn, m93c86_data, &size );
 	}
+
 
 	// wait forever
 	ef.mainloopCount = 0;
@@ -887,9 +905,18 @@ void CKernelEF::Run( void )
 	{
 		#ifdef COMPILE_MENU
 		TEST_FOR_JUMP_TO_MAINMENU2FIQs_CB( ef.c64CycleCount, ef.resetCounter2, 
-		{ if ( ef.eapiCRTModified ) {			/*logger->Write( "RaspiFlash", LogNotice, "EF-CRT saved!" );*/
-		writeChanges2CRTFile( logger, (char*)DRIVE, (char*)FILENAME, (u8*)ef.flash_cacheoptimized, false );}} 
-		{ if ( ef.bankswitchType == BS_GMOD2 ) { extern uint8_t m93c86_data[M93C86_SIZE]; char fn[ 4096 ]; sprintf( fn, "%s.eeprom", FILENAME ); writeFile( logger, DRIVE, fn, m93c86_data, 2048 ); } } )
+		{ 
+			if ( ef.eapiCRTModified ) {			/*logger->Write( "RaspiFlash", LogNotice, "EF-CRT saved!" );*/
+				writeChanges2CRTFile( logger, (char*)DRIVE, (char*)FILENAME, (u8*)ef.flash_cacheoptimized, false );
+			}
+		  if ( ef.bankswitchType == BS_GMOD2 ) {
+//				 extern uint8_t m93c86_data[M93C86_SIZE]; 
+				 char fn[ 4096 ]; 
+				 sprintf( fn, "%s.eeprom", FILENAME ); 
+				 writeFile( logger, DRIVE, fn, m93c86_data, 2048 );
+				 logger->Write( "RaspiFlash", LogNotice, "saved gmod 2 m93c86_data: '%s'", fn );
+			}
+		})
 		#endif
 
 
@@ -899,10 +926,16 @@ void CKernelEF::Run( void )
 
 		if ( ef.mainloopCount > 10000 && ef.bankswitchType == BS_GMOD2 ) 
 		{
-			extern uint8_t m93c86_data[M93C86_SIZE];
+			
+			//extern uint8_t m93c86_data[M93C86_SIZE];
 			char fn[ 4096 ];
 			sprintf( fn, "%s.eeprom", FILENAME );
+			if ( irqFallingEdge ) m_InputPin.DisableInterrupt2();
+			m_InputPin.DisableInterrupt();
+			m_InputPin.DisconnectInterrupt();
+			EnableIRQs();
 			writeFile( logger, DRIVE, fn, m93c86_data, 2048 );
+			
 		}
 
 		if ( ef.mainloopCount++ > 10000 && ef.eapiCRTModified ) 
@@ -1034,7 +1067,7 @@ static void KernelEFFIQHandler_GMOD2( void *pParam )
 	CACHE_PRELOADL2STRM( &ef.flashBank[ addr ] );
 
 	extern int m93c86_addr;
-	extern uint8_t m93c86_data[M93C86_SIZE];
+	//extern uint8_t m93c86_data[M93C86_SIZE];
 	CACHE_PRELOADL2STRMW( &m93c86_data[ m93c86_addr * 2 ] );
 
 	UPDATE_COUNTERS_MIN( ef.c64CycleCount, ef.resetCounter2 )

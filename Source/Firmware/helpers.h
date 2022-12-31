@@ -172,11 +172,11 @@ extern int writeFile( CLogger *logger, const char *DRIVE, const char *FILENAME, 
 
 #define TEST_FOR_JUMP_TO_MAINMENU2FIQs_CB( c64CycleCount, resetCounter, CB ) \
 		if ( c64CycleCount > 2000000 && resetCounter > 500000 ) {		\
-			CB;															\
-			EnableIRQs();												\
 			if ( irqFallingEdge ) m_InputPin.DisableInterrupt2();		\
 			m_InputPin.DisableInterrupt();								\
 			m_InputPin.DisconnectInterrupt();							\
+			EnableIRQs();												\
+			CB;															\
 			return;														\
 		}
 
