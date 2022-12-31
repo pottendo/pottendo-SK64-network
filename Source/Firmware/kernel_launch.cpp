@@ -208,6 +208,7 @@ void CKernelLaunch::Run( void )
 	} else
 	if ( screenType == 1 )
 	{
+		char fn[ 1024 ];//, fnslide[ 1024*2 ];
 		bool customTGA = false;
 		if (strlen( FILENAME ) > 4 && !_playingPSID)
 		{
@@ -221,7 +222,6 @@ void CKernelLaunch::Run( void )
 			}
 			else
 			{
-				char fn[ 1024 ];//, fnslide[ 1024*2 ];
 				// attention: this assumes that the filename ending is always ".crt"!
 				memset( fn, 0, 1024 );
 				strncpy( fn, FILENAME, strlen( FILENAME ) - 4 );
@@ -700,36 +700,6 @@ void CKernelLaunch::FIQHandler (void *pParam)
 			}
 			OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
 			return;
-		} else
-		{
-			if ( showSlideShow )
-			{
-				if ( pauseSlideShow )
-				{
-					pauseSlideShow --;
-				} else
-				if ( bufferEmptyI2C() )
-				{
-					extern void setMultiplePixels( u32 x, u32 y, u32 nx, u32 ny, u16 *c );
-					setMultiplePixels( curCopyRow, 0, 0, 239, (u16 *)&tftSlideShow[ (curSlideShowImage * 240 + curCopyRow ) * 240 * 2 ] );
-
-					do {
-						curPixelRow ++;
-						if ( curPixelRow > 255 )
-						{
-							curPixelRow = 0;
-							pauseSlideShow = (u32)timeSlideShow[ tftSlideShowNImages - 1 - curSlideShowImage ] * 500000;
-							curSlideShowImage = ( curSlideShowImage + tftSlideShowNImages - 1 ) % tftSlideShowNImages;
-						} 
-						curCopyRow = flipByte( curPixelRow );
-					} while ( curCopyRow >= 240 );
-				}
-			}
-
-			prepareOutputLatch4Bit();
-			outputLatch();
-			OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
-			return;
 		}
 		#ifdef WITH_NET
 		else if ( swiftLinkEnabled )
@@ -903,6 +873,38 @@ void CKernelLaunch::FIQHandler (void *pParam)
 			//return;
 		}//end of swiftlink enabled
 		#endif
+		else
+		{
+			if ( showSlideShow )
+			{
+				if ( pauseSlideShow )
+				{
+					pauseSlideShow --;
+				} else
+				if ( bufferEmptyI2C() )
+				{
+					extern void setMultiplePixels( u32 x, u32 y, u32 nx, u32 ny, u16 *c );
+					setMultiplePixels( curCopyRow, 0, 0, 239, (u16 *)&tftSlideShow[ (curSlideShowImage * 240 + curCopyRow ) * 240 * 2 ] );
+
+					do {
+						curPixelRow ++;
+						if ( curPixelRow > 255 )
+						{
+							curPixelRow = 0;
+							pauseSlideShow = (u32)timeSlideShow[ tftSlideShowNImages - 1 - curSlideShowImage ] * 500000;
+							curSlideShowImage = ( curSlideShowImage + tftSlideShowNImages - 1 ) % tftSlideShowNImages;
+						} 
+						curCopyRow = flipByte( curPixelRow );
+					} while ( curCopyRow >= 240 );
+				}
+			}
+
+			prepareOutputLatch4Bit();
+			outputLatch();
+			OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
+			return;
+		}		
+
 	}
 
 	#ifdef WITH_NET
