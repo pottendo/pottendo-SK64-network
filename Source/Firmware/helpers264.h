@@ -34,9 +34,6 @@
 #include <SDCard/emmc.h>
 #include <fatfs/ff.h>
 
-extern int readFile( CLogger *logger, const char *DRIVE, const char *FILENAME, u8 *data, u32 *size );
-extern int writeFile( CLogger *logger, const char *DRIVE, const char *FILENAME, u8 *data, u32 size );
-
 #define START_AND_READ_EXPPORT264			\
 	register u32 g2, g3, addr2;				\
 	BEGIN_CYCLE_COUNTER						\
