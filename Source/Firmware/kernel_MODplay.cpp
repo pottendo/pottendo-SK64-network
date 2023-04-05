@@ -596,9 +596,11 @@ void computeSamplesAndScreenUpdate( u16 vol )
 			if ( prevLine != context.line )
 			{
 				prevLine = context.line;
+				#ifdef LIBOPENMPT
 				if (context.pattern_num_rows > 99)
 					sprintf( buf, "%03d", maxsk( 0, context.line ) );
 				else
+				#endif
 					sprintf( buf, "%02d", maxsk( 0, context.line ) );
 				printSpriteLayer( fb, buf, 80, 78+5 );
 			}
@@ -611,16 +613,17 @@ void computeSamplesAndScreenUpdate( u16 vol )
 				else
 					sprintf( buf, "%02d", context.pattern );
 				printSpriteLayer( fb, buf, 80, 70+5 );
-
+				#ifdef LIBOPENMPT
 				context.pattern2 = mod->get_current_pattern();
 				context.pattern_num_rows = mod->get_pattern_num_rows(context.pattern2);
-				
+				#endif
+/*				
 				if ( context.num_patterns > 99)
 					sprintf( buf, "%03d", context.pattern2 );
 				else
 					sprintf( buf, "%02d", context.pattern2 );
 				printSpriteLayer( fb, buf, 80 + 16*( context.length > 99 ? 1: 0) + 48 , 70+5 );
-
+*/
 				prevPatt = context.pattern;
 			}
 
@@ -1134,7 +1137,11 @@ void CKernelMODplay::Run( void )
 		sprintf( buf, "Module:" );
 		printSpriteLayer( fb, buf, 0, 42+5 );
 		//             012345678901234567890123
+		#ifdef LIBOPENMPT
+		sprintf( buf, "Channels: %d (Type: %s)", context.num_channels, mod->get_metadata("type").c_str() );
+		#else
 		sprintf( buf, "Channels: %d", context.num_channels );
+		#endif
 		printSpriteLayer( fb, buf, 0, 50+5 );
 		sprintf( buf, "Samples:  %d", context.used_num_samples );
 		printSpriteLayer( fb, buf, 0, 58+5 );
@@ -1148,7 +1155,12 @@ void CKernelMODplay::Run( void )
 			sprintf( buf, "Pattern:  %02d/%02d", context.pattern, context.length );
 		printSpriteLayer( fb, buf, 0, 70+5 );
 
+		//sprintf( buf, "BPM:      %03d (Speed:%02d)", context.bpm, context.ticks_per_line  );
+		#ifdef LIBOPENMPT
+		sprintf( buf, "BPM:      %03d", context.bpm);
+		#else
 		sprintf( buf, "Speed:    %02d", context.ticks_per_line );
+		#endif
 		printSpriteLayer( fb, buf, 0, 86+5 );
 	}
 
@@ -1410,6 +1422,13 @@ void CKernelMODplay::Run( void )
 			m_InputPin.DisableInterrupt();
 			m_InputPin.DisconnectInterrupt();
 			latchSetClearImm( 0, LATCH_RESET );
+			#ifdef LIBOPENMPT
+				std::clog.clear();
+				std::clog.setstate(std::ios_base::failbit);
+				delete(mod);
+				mod = NULL;
+			#endif
+			#ifdef WITH_NET
 			return;		
 		}
 		#endif
