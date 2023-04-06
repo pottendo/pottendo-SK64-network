@@ -1428,7 +1428,9 @@ void CKernelMODplay::Run( void )
 				delete(mod);
 				mod = NULL;
 			#endif
-			#ifdef WITH_NET
+//			#ifdef WITH_NET
+//			logger->Write( "modplayer leaving ", LogNotice, pSidekickNet->getSysMonInfo(1) );
+//			#endif
 			return;		
 		}
 		#endif
