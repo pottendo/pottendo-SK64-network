@@ -631,8 +631,12 @@ void computeSamplesAndScreenUpdate( u16 vol )
 			if ( prevSpeed != context.ticks_per_line )
 			{
 				prevSpeed = context.ticks_per_line;
-				sprintf( buf, "%02d %03d", context.ticks_per_line, context.bpm );
+				#ifdef LIBOPENMPT
+				
+//				sprintf( buf, "%02d %03d", context.ticks_per_line, context.bpm );
+				sprintf( buf, "%03d", context.bpm );
 				printSpriteLayer( fb, buf, 80, 86+5 );
+				#endif
 			}
 		} else
 		if ( playFileType == 1 )
@@ -1149,10 +1153,17 @@ void CKernelMODplay::Run( void )
 		sprintf( buf, "Position: %02d", context.line ); //will be widened to 3 if necessary
 		printSpriteLayer( fb, buf, 0, 78+5 );
 
+/*
 		if ( context.length > 99 || context.num_patterns > 99 )
 			sprintf( buf, "Pattern:  %03d/%03d %03d/%03d", context.pattern, context.length, context.pattern2, context.num_patterns );
 		else
+			sprintf( buf, "Pattern:  %02d/%02d %02d/%02d", context.pattern, context.length, context.pattern2, context.num_patterns );
+*/
+		if ( context.length > 99 || context.num_patterns > 99 )
+			sprintf( buf, "Pattern:  %03d/%03d", context.pattern, context.length );
+		else
 			sprintf( buf, "Pattern:  %02d/%02d", context.pattern, context.length );
+			
 		printSpriteLayer( fb, buf, 0, 70+5 );
 
 		//sprintf( buf, "BPM:      %03d (Speed:%02d)", context.bpm, context.ticks_per_line  );
