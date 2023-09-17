@@ -70,8 +70,8 @@ extern u32 modeC128;
 extern u32 modeVIC, modePALNTSC;
 extern u32 hasSIDKick;
 #else
-extern u32 WAIT_CYCLE_READ;
-extern u32 WAIT_CYCLE_WRITEDATA;
+extern u16 WAIT_CYCLE_READ;
+extern u16 WAIT_CYCLE_WRITEDATA;
 #endif
 
 extern u32 machine264;
