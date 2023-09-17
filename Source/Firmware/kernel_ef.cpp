@@ -899,7 +899,12 @@ void CKernelEF::Run( void )
 
 	if ( ef.bankswitchType == BS_GMOD2 )
 	{
-		//extern uint8_t m93c86_data[M93C86_SIZE];
+		ef.flashFitsInCache = 0;
+		extern uint8_t m93c86_data[M93C86_SIZE];
+		char fn[ 4096 ];
+		sprintf( fn, "%s.eeprom", FILENAME );
+		u32 size;
+		extern CLogger *logger;
 		CACHE_PRELOAD_DATA_CACHE( m93c86_data, 2048, CACHE_PRELOADL1STRMW )
 		memset( m93c86_data, 0, 2048 );
 		if ( !readFile( logger, DRIVE, fn, m93c86_data, &size ) && gmod2EEPROM_data )
