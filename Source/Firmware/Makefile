@@ -1,9 +1,15 @@
 #
 # Makefile
 #
-EXTRACLEAN = OLED/*.o resid/*.o OLED/*.d resid/*.d PSID/libpsid64/*.o PSID/psid64/*.o D2EF/*.o
+EXTRACLEAN = OLED/*.o OLED/*.d \
+	resid/*.o resid/*.d \
+	PSID/libpsid64/*.o PSID/libpsid64/*.d \
+	PSID/psid64/*.o PSID/psid64/*.d \
+	D2EF/*.o D2EF/*.d \
+	STSoundLib/*.o STSoundLib/*.d \
+	Vice/*.o Vice/*.d
 
-CIRCLEHOME = ../..
+CIRCLEHOME = ../../../../circle
 OBJS = lowlevel_arm64.o gpio_defs.o helpers.o latch.o oled.o ./OLED/num2str.o 
 
 ### MENU C64/C128 ###
@@ -123,6 +129,6 @@ LIBS += $(CIRCLEHOME)/lib/usb/libusb.a \
 #	$(CIRCLEHOME)/addon/vc4/interface/vcos/libvcos.a \
 #	$(CIRCLEHOME)/addon/vc4/interface/vmcs_host/libvmcs_host.a \
 
-include ../Rules.mk
+include $(CIRCLEHOME)/Rules.mk
 
 -include $(DEPS)
