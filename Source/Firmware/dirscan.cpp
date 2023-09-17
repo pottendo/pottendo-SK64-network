@@ -393,6 +393,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 						 strstr( FileInfo.fname, ".ym" )  != NULL || strstr( FileInfo.fname, ".YM" )  != NULL ||
 						 strstr( FileInfo.fname, ".xm" )  != NULL || strstr( FileInfo.fname, ".XM" )  != NULL ||
 						 strstr( FileInfo.fname, ".it" )  != NULL || strstr( FileInfo.fname, ".IT" )  != NULL ||
+						 strstr( FileInfo.fname, ".pp" )  != NULL || strstr( FileInfo.fname, ".PP" )  != NULL ||
 						 strstr( FileInfo.fname, ".rom" ) != NULL || strstr( FileInfo.fname, ".ROM" ) != NULL )
 					{
 						strcpy( (char*)sort[sortCur].name, FileInfo.fname );
@@ -607,6 +608,7 @@ void readDirectory( int mode, const char *DIRPATH, DIRENTRY *d, s32 *n, u32 pare
 				 strstr( (char*)sort[ pos ].name, ".wav" ) != NULL || strstr( (char*)sort[ pos ].name, ".WAV" ) != NULL || 
 				 strstr( (char*)sort[ pos ].name, ".xm" ) != NULL || strstr( (char*)sort[ pos ].name, ".XM" ) != NULL || 
 				 strstr( (char*)sort[ pos ].name, ".it" ) != NULL || strstr( (char*)sort[ pos ].name, ".IT" ) != NULL || 
+				 strstr( (char*)sort[ pos ].name, ".pp" ) != NULL || strstr( (char*)sort[ pos ].name, ".PP" ) != NULL || 
 				 strstr( (char*)sort[ pos ].name, ".ym" ) != NULL || strstr( (char*)sort[ pos ].name, ".YM" ) != NULL )
 			{
 				d[ *n ].f = DIR_MUSIC_FILE;

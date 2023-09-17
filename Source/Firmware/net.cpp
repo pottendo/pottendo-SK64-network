@@ -806,6 +806,7 @@ boolean CSidekickNet::isLibOpenMPTFileType(char * x){
 		strcmp(x,"mod") == 0 ||
 		strcmp(x,"xm") == 0 ||
 		strcmp(x,"it") == 0 ||
+		strcmp(x,"pp") == 0 ||
 		strcmp(x,"ym") == 0 ||
 		strcmp(x,"med") == 0 ||
 		strcmp(x,"sfx") == 0 ||

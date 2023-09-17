@@ -887,6 +887,8 @@ void CKernelMODplay::Run( void )
 			playFileType = 0; else
 	if ( strstr( (char*)fn_up, ".XM" ) )
 		playFileType = 0; else
+	if ( strstr( (char*)fn_up, ".PP" ) )
+		playFileType = 0; else
 #endif		
 	if ( strstr( (char*)fn_up, ".WAV" ) )
 		playFileType = 1; else
