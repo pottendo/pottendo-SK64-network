@@ -2321,7 +2321,7 @@ int main( void )
 		}*/
 
 		/* for debugging purposes only*/
-/*		if ( launchKernel == 255 ) 
+		/*if ( launchKernel == 255 ) 
 		{
 			reboot (); 	
 		} else*/

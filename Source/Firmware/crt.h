@@ -95,4 +95,7 @@ void parseCRTInMemory( CLogger *logger, CRT_HEADER *crtHeader, u8 *flash, volati
 int checkCRTFileVIC20( CLogger *logger, const char *DRIVE, const char *FILENAME, u32 *error );
 extern int  getVIC20CRTFileStartEndAddr( CLogger *logger, const char *FILENAME, u32 *addr );
 
+extern u8 gmod2EEPROM[ 2048 ];
+extern u8 gmod2EEPROM_data;
+
 #endif
