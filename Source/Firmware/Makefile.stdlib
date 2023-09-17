@@ -101,7 +101,6 @@ endif
 
 endif
 
-#remark building menu20 will fail in this fork - but it is too early to fix it now
 ifeq ($(kernel), menu20)
 CPPFLAGS += -DCOMPILE_MENU=1 -DSIDEKICK20
 OBJS += kernel_menu20.o crt.o dirscan.o vic20config.o vic20screen.o mygpiopinfiq.o  tft_st7789.o sound.o disk_emulation.o mempool.o
@@ -187,6 +186,15 @@ LIBS += \
 	$(MBEDTLS_DIR)/library/libmbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedx509.a \
 	$(MBEDTLS_DIR)/library/libmbedcrypto.a
+endif
+
+#work in progress, one day we should be able to enable/disable libopenmpt
+#for this the docker builder needs to be changed
+ifeq ($(kernel), menu)
+#ifeq ($(libopenmpt), on)
+ifeq ($(net), on)
+LIBS += libs/libopenmpt.a
+endif
 endif
 
 ifeq ($(net), on)
