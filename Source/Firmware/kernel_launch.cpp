@@ -32,6 +32,12 @@
 #ifdef WITH_NET
 extern CSidekickNet * pSidekickNet;
 bool swiftLinkEnabled = false; //indicates if the FIQ handler should care for swiftlink register handling
+bool wic2expEnabled = false;
+bool gotWiCResponseByte = false;
+bool wicTrafficDirection = true;
+bool wicTrafficDirectionOld = true;
+bool wicTrafficDirectionOut = true; //optimistic default
+bool wicTrafficDirectionIn = false;
 static const unsigned swiftLinknetDelayDMADefault = 60000;
 
 #ifdef SW_DEBUG
@@ -42,6 +48,18 @@ unsigned swiftLinkCounter = 0; //for debugging register communication
 #endif
 //char swiftLinkReceived[ swiftLinkLogLengthMax ];
 
+//tmp
+unsigned swiftLinkDataReads = 0; //how many times did c64 read from swiftlink data register, for debugging only
+unsigned swiftLinkDataReadsTrue = 0;
+unsigned swiftLinkDataReadsFalse = 0;
+unsigned wicSwitchDirectionCounter = 0;
+
+u8 wicCommandState = 0; //0 = magic byte not seen, 1=magic byte seen, 2=low byte seen, 3=high byte seen, 4=command seen
+u8 wicCommand = 0;
+u16 wicCommandLength = 0;
+
+boolean wicByteIncoming = false;
+boolean swiftLinkByteReceived = false; //incoming byte from frontend
 unsigned char swiftLinkByte = 0; //incoming byte from frontend
 unsigned char swiftLinkResponse = 0; //byte that comes to frontend from terminal
 unsigned swiftLinkDoNMI = 0;
@@ -311,6 +329,9 @@ void CKernelLaunch::Run( void )
 	resetFromCodeState = 0;
 
 	#ifdef WITH_NET
+
+	wic2expEnabled = false;
+
 	swiftLinkEnabled = false; //too early to enable here
 	swiftLinkByte = 0;
 	swiftLinkResponse = 0;
@@ -319,6 +340,8 @@ void CKernelLaunch::Run( void )
 	swiftLinkCounter = 0;
 	swiftLinkLog[0] = '\0';
 	swiftLinkDataReads = 0;
+	swiftLinkDataReadsTrue = 0;
+	swiftLinkDataReadsFalse = 0;
 	//swiftLinkReceivedCounter = 0;
 	//swiftLinkReceived[0] = '\0';
 	#endif
@@ -340,6 +363,14 @@ void CKernelLaunch::Run( void )
 	unsigned netDelay = _playingPSID ? 180000000: 3500000; //TODO: improve this
 	unsigned followUpDelay = (pSidekickNet->getModemEmuType() == 1) ? 300000 : 300; //(_playingPSID ? 3000: 300);
 
+	pSidekickNet->setModemEmuType(3); //auto-enable wic64 emu FIXME
+
+
+	if (pSidekickNet->getModemEmuType() == 3) //WiC64-2-ExpansionPort emulation is configured by user
+	{
+		netDelay = 3500000;
+		followUpDelay = 300000;
+	}
 
 	if ( pSidekickNet->usesWLAN() ) followUpDelay = 10 * followUpDelay; //TODO
 	#endif
@@ -456,7 +487,21 @@ void CKernelLaunch::Run( void )
 				netDelay = 0;
 				//isDoubleDirect = true;
 			}
-				
+			
+			if (wic2expEnabled)
+			{
+				if ( wicCommandState == 5 ) //disableCart && 
+					netDelay = 0;
+				else
+					netDelay = followUpDelay; //never get to zero
+
+				if ( !gotWiCResponseByte && pSidekickNet->areCharsInInputBuffer()) //wicTrafficDirectionIn &&
+				{
+					swiftLinkResponse = pSidekickNet->getCharFromInputBuffer();
+					gotWiCResponseByte = true;
+				}
+			}
+			
 			if (netDelay == 0 )
 			{
 
@@ -479,7 +524,14 @@ void CKernelLaunch::Run( void )
 						logger->Write( "sk", LogNotice, "firstEntry");
 					firstEntry = true;
 				}
-				
+
+				if (pSidekickNet->getModemEmuType() == 3 && !wic2expEnabled) //WiC64-2-ExpansionPort emulation is configured by user
+				{
+						logger->Write( "sk", LogNotice, "wic64-2-expansion port handling unlocked");
+						wicCommandState = 0;
+						wic2expEnabled = true;
+				}
+
 				if (pSidekickNet->getModemEmuType() == 1) //swiftlink emulation is configured by user
 				{
 					swiftLinknetDelayDMA = swiftLinknetDelayDMADefault; //reset to high value
@@ -556,6 +608,7 @@ void CKernelLaunch::Run( void )
 				else
 				{
 				*/
+				
 					pSidekickNet->handleQueuedNetworkAction();
 					//isDoubleDirect = false;
 				//}
@@ -564,6 +617,22 @@ void CKernelLaunch::Run( void )
 //					logger->Write( "sk", LogNotice, "end of netloop - releasing DMA soon");
 //				else
 //					logger->Write( "sk", LogNotice, "end of netloop");
+					if (wic2expEnabled && wicCommandState == 5 ){ //}&& wicTrafficDirection){
+							logger->Write( "sk", LogNotice, "WiC counted access to nmi check total: %u true: %u false: %u directionChanges: %u", swiftLinkDataReads, swiftLinkDataReadsTrue, swiftLinkDataReadsFalse, wicSwitchDirectionCounter);
+							swiftLinkDataReads = 0;
+							swiftLinkDataReadsTrue = 0;
+							swiftLinkDataReadsFalse = 0;
+						
+							pSidekickNet->launchWiCCommand(wicCommand, wicCommandState);
+/*							
+							if (wicCommand == 1){
+								wicTrafficDirectionIn = true;
+								wicTrafficDirectionOut = false;
+							}
+*/							
+							wicCommandState = 0;
+							wicCommand = 0;
+					}
 
 
 				// warm caches
@@ -586,7 +655,17 @@ void CKernelLaunch::Run( void )
 				}
 
 			} //end of netdelay
-			
+/*
+			else if (wic2expEnabled ) //&& !wicTrafficDirection)
+			{
+				if ( !gotWiCResponseByte && pSidekickNet->areCharsInInputBuffer())
+				{
+					unsigned char tmpOutput = pSidekickNet->getCharFromInputBuffer();
+					swiftLinkResponse = tmpOutput;
+					gotWiCResponseByte = true;
+				}
+			}
+	*/		
 			else if (swiftLinkEnabled && pSidekickNet->getModemEmuType() == 1 && !pSidekickNet->isModemSocketConnected())
 			{
 				//oldConnectState = pSidekickNet->isModemSocketConnected();
@@ -672,9 +751,179 @@ void CKernelLaunch::FIQHandler (void *pParam)
 		return;
 	}
 
+	#ifdef WITH_NET
+/*
+	if ( !disableCart && CPU_WRITES_TO_BUS && IO2_ACCESS ) // writing #123 to $df00 (IO2) will disable the cartridge
+	{
+		READ_D0to7_FROM_BUS( D )
+
+		if ( GET_IO12_ADDRESS == 0 && D == 123 )
+		{
+			disableCart = 1;
+			SET_GPIO( bGAME | bEXROM | bNMI );
+			FINISH_BUS_HANDLING
+			return;
+		}
+	}
+	*/
 	if ( disableCart )
 	{
-		if ( _playingPSID )
+		if ( wic2expEnabled )
+		{
+			//C64 reads bytes from WiC642ExpansionPort emulation
+			if ( IO1_ACCESS && CPU_READS_FROM_BUS )
+			{
+				if ( GET_IO12_ADDRESS == 0x0d) //nmi flag (userport: $dd0d)
+				{
+					if ( !wicByteIncoming && (wicCommandState < 5 || gotWiCResponseByte ) )
+					{
+						//16; //set bit 5 if a byte was successfully picked up by Sidekick or if a byte can be picked up from Sidekick
+						WRITE_D0to7_TO_BUS( 16 )
+						FINISH_BUS_HANDLING
+						CACHE_PRELOADL2KEEP( swiftLinkResponse );
+						if (gotWiCResponseByte){
+							swiftLinkDataReadsTrue++;
+						}
+						return;
+					}
+					else
+					{
+						WRITE_D0to7_TO_BUS( 1 )  //this should cause the 6510 to wait for virtual nmi flag
+						FINISH_BUS_HANDLING
+						swiftLinkDataReadsFalse++;
+						return;
+					}
+					
+/*					
+					if (
+						swiftLinkByteReceived || wicCommandState == 5 || !gotWiCResponseByte || wicByteIncoming
+						//(wicTrafficDirectionOut && (swiftLinkByteReceived || wicCommandState == 5)) ||
+						//(wicTrafficDirectionIn && (!gotWiCResponseByte || wicByteIncoming))
+					){
+						swiftLinkDataReadsFalse++;
+						D = 8; //this should cause the 6510 to wait for virtual nmi flag
+					}
+					else
+					{
+						swiftLinkDataReadsTrue++;
+						D=16; //16; //set bit 5 if a byte was successfully picked up by Sidekick
+					}
+*/					
+				}
+				else if ( GET_IO12_ADDRESS == 0x01) //read byte (userport: $dd01)
+				{
+						wicByteIncoming = true;
+//						if ( !gotWiCResponseByte ) D = 72;//fake echo -> h
+//						else 
+						//	D = swiftLinkResponse;
+						WRITE_D0to7_TO_BUS( swiftLinkResponse )
+						FINISH_BUS_HANDLING
+						swiftLinkResponse = 0;
+						swiftLinkDataReads++;
+						gotWiCResponseByte = false;
+/*						
+						if ( pSidekickNet->areCharsInInputBuffer())
+						{
+							//unsigned char tmpOutput = pSidekickNet->getCharFromInputBuffer();
+							//swiftLinkResponse = tmpOutput;
+							swiftLinkResponse = pSidekickNet->getCharFromInputBuffer();
+							gotWiCResponseByte = true;
+						}
+*/						
+						wicByteIncoming = false;
+						return;
+				}
+				else if ( GET_IO12_ADDRESS == 0x00 || GET_IO12_ADDRESS == 0x02 || GET_IO12_ADDRESS == 0x03) //data direction
+				{ 
+					//c64 reads this but doesn't care what the reply is
+					WRITE_D0to7_TO_BUS( 0 )
+					FINISH_BUS_HANDLING
+					return;
+				}
+			}
+			//C64 sends bytes to WiC642ExpansionPort emulation
+			else if ( IO1_ACCESS && CPU_WRITES_TO_BUS )
+			{
+				READ_D0to7_FROM_BUS( D )
+				if ( GET_IO12_ADDRESS == 0x01) //write byte (userport: $dd01)
+				{
+					//add D value to command string
+					wicByteIncoming = true;
+					/*wicCommandState
+						0 = magic byte not seen, 
+						1 = magic byte seen,
+						2 = low byte seen,
+						3 = high byte seen,
+						4 = command byte seen, in process of reading payload bytes
+						5 = end of payload reached
+					*/
+					
+					if (wicCommandState < 5){
+						if (wicCommandState == 0 && D == 87)
+						{
+							wicCommandState = 1;
+						}
+						else if (wicCommandState == 1){
+							wicCommandLength = D; //low byte
+							wicCommandState = 2;
+						}
+						else if (wicCommandState == 2){
+							wicCommandLength += D*256 -4; //high byte
+							wicCommandState = 3;
+						}
+						else if (wicCommandState == 3){
+							wicCommand = D;
+							wicCommandState = 4;
+						}
+						else if (wicCommandState == 4){
+							pSidekickNet->addToModemOutputBuffer( D );
+							wicCommandLength--;
+							if (wicCommandLength == 0)
+								wicCommandState = 5;
+							else
+								wicCommandState = 4;
+						}
+					}
+					FINISH_BUS_HANDLING
+					wicByteIncoming = false;
+					return;
+				}
+				else if ( GET_IO12_ADDRESS == 0x03) //data direction
+				{ 
+					
+					//c64 tells wic if it wants to write to wic ($ff) or if it wants to read from wic ($00)
+					wicTrafficDirection = (D == 255);
+					wicTrafficDirectionOut = wicTrafficDirection; 
+					wicTrafficDirectionIn = !wicTrafficDirection;
+
+					wicTrafficDirectionOld = wicTrafficDirection;
+					
+					FINISH_BUS_HANDLING
+					return;
+				}			
+				else if ( GET_IO12_ADDRESS == 0x00) //data direction
+				{
+					//c64 tells wic if it wants to write to wic (by setting bit 3 - $04) or if it wants to read from wic (by resetting bit 3)
+					
+					wicTrafficDirection = !(D & (1 << 3));
+					if (wicTrafficDirectionOld != wicTrafficDirection){
+						wicSwitchDirectionCounter++;
+					}
+					wicTrafficDirectionOut = wicTrafficDirection; 
+					wicTrafficDirectionIn = !wicTrafficDirection;
+					wicTrafficDirectionOld = wicTrafficDirection;
+					
+					FINISH_BUS_HANDLING
+					return;
+				}
+				else if ( GET_IO12_ADDRESS == 0x02) //(userport: $dd02)
+				{
+					FINISH_BUS_HANDLING
+					return;
+				}
+			}
+		}
+		else if ( _playingPSID )
 		{
 			if ( IO2_ACCESS && CPU_READS_FROM_BUS && GET_IO12_ADDRESS == 0x55 )
 			{
@@ -703,7 +952,6 @@ void CKernelLaunch::FIQHandler (void *pParam)
 			OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
 			return;
 		}
-		#ifdef WITH_NET
 		else if ( swiftLinkEnabled )
 		{
 			if ( IO1_ACCESS && CPU_READS_FROM_BUS ) // && (GET_IO12_ADDRESS >= 0x00 && GET_IO12_ADDRESS <= 0x03))
@@ -730,7 +978,7 @@ void CKernelLaunch::FIQHandler (void *pParam)
 					swiftLinkDataReads++;
 					#endif
 				}
-				if ( GET_IO12_ADDRESS == 0x03) //control register
+				else if ( GET_IO12_ADDRESS == 0x03) //control register
 				{ 
 					D = swiftLinkRegisterCtrl;
 				}
@@ -786,7 +1034,7 @@ void CKernelLaunch::FIQHandler (void *pParam)
 				}
 				#endif
 				//FINISH_BUS_HANDLING
-*/				
+*/
 			}
 			else if ( IO1_ACCESS && CPU_WRITES_TO_BUS  )
 			{
@@ -878,7 +1126,7 @@ void CKernelLaunch::FIQHandler (void *pParam)
 	}
 
 	#ifdef WITH_NET
- 	if ( swiftLinkEnabled )
+ 	if ( swiftLinkEnabled || wic2expEnabled)
 	{ 
 		FINISH_BUS_HANDLING
 		return;

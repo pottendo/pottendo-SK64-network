@@ -1882,9 +1882,11 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 					if (pSidekickNet->isUsbUserportModemConnected())
 						pSidekickNet->setModemEmuType(2);
 					else
-						pSidekickNet->setModemEmuType(0);
+						pSidekickNet->setModemEmuType(3);
 				}
 				else if ( pSidekickNet->getModemEmuType() == 2)
+					pSidekickNet->setModemEmuType(3);
+				else if ( pSidekickNet->getModemEmuType() == 3)
 					pSidekickNet->setModemEmuType(0);
 				else if ( pSidekickNet->getModemEmuType() == 0)
 					pSidekickNet->setModemEmuType(1);
@@ -2360,6 +2362,8 @@ void printNetworkScreen()
 			strModemEmu.Append( "Userport" );
 		else if ( pSidekickNet->getModemEmuType() == 1 )
 			strModemEmu.Append( "Swiftlink" );
+		else if ( pSidekickNet->getModemEmuType() == 3 )
+			strModemEmu.Append( "WiC64-EXP" );
 		else
 			strModemEmu.Append( "None" );
 	}
@@ -2369,7 +2373,10 @@ void printNetworkScreen()
 		strModemEmu.Append( "Inactive" );
 	}
 	
-	strModemBaudR.Append( pSidekickNet->getBaudrate() );
+	if ( pSidekickNet->getModemEmuType() != 3 )
+		strModemBaudR.Append( pSidekickNet->getBaudrate() );
+	else
+		strModemBaudR.Append( "---" );
 	strPRGLnchTwk.Append( pSidekickNet->getPRGLaunchTweakValueAsString() );
 	
 	u32 y1 = 2;

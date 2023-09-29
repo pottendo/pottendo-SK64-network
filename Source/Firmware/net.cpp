@@ -78,6 +78,7 @@ static const char CSDB_HOST[] = "csdb.dk";
 
 #define SK_MODEM_SWIFTLINK	1
 #define SK_MODEM_USERPORT_USB 2
+#define SK_WIC64_EXP_EMULATION 3
 
 #ifdef WITH_WLAN
 #define DRIVEWLAN "SD:"
@@ -153,6 +154,9 @@ CSidekickNet::CSidekickNet(
 		m_wasSktpScreenFreshlyEntered( false ),
 		m_isMenuScreenUpdateNeeded( false ),
 		m_isC128( false ),
+		//m_WiCEmuSendCommand( false ),
+		m_WiCEmuIsWriteMode( false ),
+		m_WiCEmuIsWriteModeOld( false ),
 		m_isBBSSocketConnected(false),
 		m_isBBSSocketFirstReceive(true),
 		m_BBSSocketDisconnectPlusCount(0),
@@ -350,7 +354,13 @@ boolean CSidekickNet::Initialize()
 		m_SKTPServer.valid = false;
 		//m_SKTPServer.ipAddress = getIPForHost( netSktpHostName, success );
 		m_SKTPServer.logPrefix = getLoggerStringForHost( netSktpHostName, port);
-		m_SKTPServer.valid = false;
+		
+		m_wicStandardHTTPTarget.hostName = netSktpHostName;
+		m_wicStandardHTTPTarget.port = port;
+		m_wicStandardHTTPTarget.attempts = 0;
+		m_wicStandardHTTPTarget.valid = true;
+		m_wicStandardHTTPTarget.ipAddress = getIPForHost( netSktpHostName, success );
+		m_wicStandardHTTPTarget.logPrefix = getLoggerStringForHost( netSktpHostName, port);
 	}
 	else
 	{
@@ -1475,62 +1485,122 @@ unsigned CSidekickNet::getSKTPErrorCode(){
 	return m_sktpScreenErrorCode;
 }
 
-void CSidekickNet::parseSKTPDownloadCommand( char * pResponseBuffer, unsigned offset){
-	u8 tmpUrlLength = pResponseBuffer[offset];
-	u8 tmpFilenameLength = pResponseBuffer[offset+1];
-	m_bSaveCSDBDownload2SD = ((int)pResponseBuffer[offset+2] == 1);
-	
+
+boolean CSidekickNet::parseURL( remoteHTTPTarget & target, char * urlBuffer, u16 urlLength){
+
 	char hostName[256];
-	u16 pathStart;
-	u16 pathStartSuffix = 0;
-	//TODO add more sanity checks here
-	if ( pResponseBuffer[ offset + 3 + 4 ] == ':')      // ....http
-		pathStartSuffix = offset + 7 + 3;                 // ....http://
-	else if ( pResponseBuffer[ offset + 3 + 4 ] == 's') // ....https
-		pathStartSuffix = offset + 7 + 4;                 // ....https://
-	else
-		logger->Write( "parseSKTPDownloadCommand", LogNotice, "Error: wrong char");
-
-	for ( pathStart = pathStartSuffix; pathStart < tmpUrlLength+offset-1; pathStart++ ){
-		//logger->Write( "parseSKTPDownloadCommand", LogNotice, "hostnamebuild: char %c", pResponseBuffer[ pathStart ] );
-		if ( pResponseBuffer[ pathStart ] == '/' || pResponseBuffer[ pathStart ] == ':')
-			break;
-		hostName[ pathStart - pathStartSuffix] = pResponseBuffer[ pathStart ];
+	char protocolChecker[9] = "https://";
+	u16 protocolType = 0, i = 0, j = 0;
+	u8 limit = 0;
+	
+	if (urlLength < 9)
+	{
+		logger->Write( "parseURL", LogNotice, "Error: UrlLength is way too small");
+		return false;
 	}
-	hostName[pathStart - pathStartSuffix] = '\0';
-	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "Detected hostname: >%s<", hostName);
-
-	if ( pResponseBuffer[ pathStart ] == ':' ){
-		while( pResponseBuffer[ pathStart ] != '/')
+	
+	if (urlBuffer[4] == 's')
+	{
+		limit = 5; //for s in https
+		protocolType = 443;
+	}
+	else if (urlBuffer[4] == ':')
+	{
+		limit = 4; //for p in http
+		protocolType = 80; //could be another port in the string later on, but let's default to 80!
+	}
+	else
+	{
+		logger->Write( "parseURL", LogNotice, "Error: protocol detection step 1 failed (not http, not https)");
+		return false;
+	}
+	
+	if (limit > 0)
+	{
+		for (i = 0; i < 8; i ++)
 		{
-			//logger->Write( "parseSKTPDownloadCommand", LogNotice, "skip port: char %c", pResponseBuffer[ pathStart ] );
-			pathStart++;
+//			logger->Write( "parseSKTPDownloadCommand", LogNotice, "Comparison %i %i %c %c",urlBuffer[i], protocolChecker[i], urlBuffer[i], protocolChecker[i]  );
+			#ifndef WITHOUT_STDLIB
+			if (protocolChecker[i] != tolower(urlBuffer[j]))
+			#else
+			if (protocolChecker[i] != urlBuffer[j])
+			#endif
+			{
+//				logger->Write( "parseURL", LogNotice, "Comparison stoped at i=%i j=%i ",i,j);
+				limit = 0;
+				protocolType = 0;
+				break;
+			}
+			if (i == 3 && limit == 4) i++; //skip the s-check for http
+			j++;
+		}
+	}
+	if ( protocolType == 0)
+	{
+		logger->Write( "parseURL", LogNotice, "Error: wrong protocol (not http, not https)");
+		return false;
+	}
+	
+	char * pathBuffer = &	urlBuffer[limit+3];
+	//logger->Write( "parseURL", LogNotice, "Pathbuffer is: %s, urlbuffer is: %s protocol is: %u", pathBuffer, urlBuffer, protocolType);
+
+	for ( i = 0; i < urlLength; i++ ){
+		//logger->Write( "parseURL", LogNotice, "hostnamebuild: char %c", pResponseBuffer[ i ] );
+		if ( pathBuffer[ i ] == '/' || pathBuffer[ i ] == ':')
+			break;
+		hostName[ i ] = pathBuffer[ i ];
+	}
+	hostName[i] = '\0';
+	//logger->Write( "parseURL", LogNotice, "Detected hostname: >%s<", hostName);
+
+	if ( pathBuffer[ i ] == ':' ){
+		while( pathBuffer[ i ] != '/')
+		{
+			//logger->Write( "parseURL", LogNotice, "skip port: char %c", pResponseBuffer[ i ] );
+			i++;
 		}
 	}
 
 	if (strcmp(hostName, m_CSDB.hostName) == 0){
-		m_CSDBDownloadHost = m_CSDB;
+		target = m_CSDB;
 	}
 	else if ( strcmp(hostName, m_CSDB_HVSC.hostName) == 0){
-		m_CSDBDownloadHost = m_CSDB_HVSC;
+		target = m_CSDB_HVSC;
 	}
 	else if ( strcmp(hostName, m_SKTPServer.hostName) == 0){
-		m_CSDBDownloadHost = m_SKTPServer;
+		target = m_SKTPServer;
 	}
 	else if ( strcmp(hostName, m_ModarchiveAPI.hostName) == 0){
-		//logger->Write( "parseSKTPDownloadCommand", LogNotice, "MODARCHIVE: >%s<", hostName);
-		m_CSDBDownloadHost = m_ModarchiveAPI;
+		//logger->Write( "parseURL", LogNotice, "MODARCHIVE: >%s<", hostName);
+		target = m_ModarchiveAPI;
 	}
 	else{
-		logger->Write( "parseSKTPDownloadCommand", LogNotice, "Error: Unknown host: >%s<", hostName);
-		m_CSDBDownloadHost = m_CSDB;
+		logger->Write( "parseURL", LogNotice, "Error: Unknown host: >%s<", hostName);
+		target = m_CSDB;
 	}
-	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "hostname is ok, now memcopy");
+	//logger->Write( "parseURL", LogNotice, "hostname is ok, now memcopy");
+	u16 pathLength = urlLength - i - limit -3;
+	memcpy(target.urlPath , &pathBuffer[ i ], pathLength);
+	target.urlPath[pathLength] = '\0';
+	//logger->Write( "parseURL", LogNotice, "download path: >%s<", m_CSDBDownloadPath);
+	target.port = protocolType;
+	return true;
 
-	memcpy( m_CSDBDownloadPath, &pResponseBuffer[ pathStart ], tmpUrlLength + offset -1 - pathStart + 4);
-	m_CSDBDownloadPath[tmpUrlLength + offset -1 - pathStart + 4] = '\0';
-	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "download path: >%s<", m_CSDBDownloadPath);
-	memcpy( m_CSDBDownloadFilename, &pResponseBuffer[ 4 + tmpUrlLength + offset -1 ], tmpFilenameLength );
+}
+
+void CSidekickNet::parseSKTPDownloadCommand( char * pResponseBuffer, unsigned offset){
+	u8 tmpUrlLength = pResponseBuffer[offset];
+	u8 tmpFilenameLength = pResponseBuffer[offset+1];
+	m_bSaveCSDBDownload2SD = ((int)pResponseBuffer[offset+2] == 1);
+
+	char * urlBuffer = &pResponseBuffer[offset +3];
+	boolean success = parseURL( m_CSDBDownloadHost, urlBuffer, tmpUrlLength);
+	
+	u8 pl =strlen(m_CSDBDownloadHost.urlPath);
+	memcpy(m_CSDBDownloadPath, m_CSDBDownloadHost.urlPath, pl);
+	m_CSDBDownloadPath[pl] = '\0';
+
+	memcpy( m_CSDBDownloadFilename, &pResponseBuffer[ 3 + tmpUrlLength + offset ], tmpFilenameLength );
 	m_CSDBDownloadFilename[tmpFilenameLength] = '\0';
 	//logger->Write( "parseSKTPDownloadCommand", LogNotice, "filename: >%s<", m_CSDBDownloadFilename);
 	//FIXME the extension grabbing only works if the download stuff is at the end of the response
@@ -2006,7 +2076,7 @@ int CSidekickNet::readCharFromFrontend( unsigned char * buffer)
 		{
 			return m_pUSBSerial->Read(buffer, 1);
 		}
-		else if ( m_modemEmuType == SK_MODEM_SWIFTLINK )
+		else if ( m_modemEmuType == SK_MODEM_SWIFTLINK || m_modemEmuType == SK_WIC64_EXP_EMULATION)
 		{
 			if (m_modemOutputBufferLength > 0)
 			{
@@ -2020,7 +2090,8 @@ int CSidekickNet::readCharFromFrontend( unsigned char * buffer)
 				}
 				else{
 					buffer[0] = m_modemOutputBuffer[m_modemOutputBufferPos++];
-					logger->Write ("CSidekickNet", LogNotice, "readCharFromFrontend - got '%u' from m_modemOutputBuffer",buffer[0],buffer[0] );
+					
+//					logger->Write ("CSidekickNet", LogNotice, "readCharFromFrontend - got '%u' (%c)from m_modemOutputBuffer",buffer[0], (buffer[0] > 31 && buffer[0] <126) ? buffer[0]:126 );
 					return 1;
 				}
 			}
@@ -2035,7 +2106,7 @@ int CSidekickNet::writeCharsToFrontend( unsigned char * buffer, unsigned length)
 	{
 		return m_pUSBSerial->Write(buffer, length);
 	}
-	else if ( m_modemEmuType == SK_MODEM_SWIFTLINK )
+	else if ( m_modemEmuType == SK_MODEM_SWIFTLINK || m_modemEmuType == SK_WIC64_EXP_EMULATION )
 	{
 			if ( m_modemInputBufferLength > 0 && m_modemInputBufferPos == m_modemInputBufferLength )
 			{
@@ -2083,15 +2154,126 @@ bool CSidekickNet::areCharsInOutputBuffer()
 	return ( m_modemOutputBufferLength > 0 && m_modemOutputBufferPos < m_modemOutputBufferLength );
 }
 
+void CSidekickNet::launchWiCCommand( u8 cmd, u8 cmdState ){
+	int bsize = 4096;
+	unsigned char inputChar[bsize];
+	char * wicURLPath;
+	logger->Write ("launchWiCCommand", LogNotice, "entering");
+	int x = 0;
+	while ( readCharFromFrontend( inputChar ) == 1)
+	{
+		x++;
+		inputChar[0] = (inputChar[0] > 31 && inputChar[0] <126) ? inputChar[0]:126;
+		m_modemCommand[ m_modemCommandLength++ ] = inputChar[0];
+		m_modemCommand[ m_modemCommandLength ] = '\0';
+	}
+	if (x==0)
+		logger->Write ("launchWiCCommand", LogNotice, "error received command with ZERO chars from C64, command is %i, / state %i", cmd, cmdState);
+	else if (x>0){
+		logger->Write ("launchWiCCommand", LogNotice, "received command with %i chars from C64:'%s', command is %i, / state %i", x, m_modemCommand, cmd, cmdState);
+		
+		if (cmd == 1)
+		{
+			remoteHTTPTarget wicHTTPTarget;
+			if (m_modemCommand[0] == '!') //shorthand command
+			{
+//				if ( !m_wicStandardHTTPTarget.valid)
+//					m_wicStandardHTTPTarget = m_SKTPServer;
+					
+//				{
+					wicHTTPTarget = m_wicStandardHTTPTarget;
+					wicURLPath = wicHTTPTarget.urlPath;
+					char * suffix = &m_modemCommand[1];
+					logger->Write ("launchWiCCommand", LogNotice, wicHTTPTarget.hostName, "hostName");
+					logger->Write ("launchWiCCommand", LogNotice, "suffix: '%s' , path: %s", suffix, wicURLPath);
+					strcat( wicURLPath, suffix);
+					logger->Write ("launchWiCCommand", LogNotice, "processing wic command 1 with shorthand (!), urlPath is: '%s'", wicURLPath);
+//				}
+//				else
+//					logger->Write ("launchWiCCommand", LogNotice, "ERROR skipped processing wic command 1 with shorthand (!) as there is no Default Server set");
+			}
+			else{
+				logger->Write ("launchWiCCommand", LogNotice, "processing wic command 1 without shorthand (full url)");
+				if (!parseURL( wicHTTPTarget, m_modemCommand, m_modemCommandLength))
+				{
+					logger->Write ("launchWiCCommand", LogNotice, "Error parsing URL, discarding command");
+					cleanUpModemEmuSocket();
+					return;
+				}
+			}
+			wicURLPath = wicHTTPTarget.urlPath;
+			char pResponseBuffer[1024 * 500 + 1]; //maybe turn this into member var when creating new sktp class?
+			
+/*			
+			 "01234567890123456789012345"; //26
+			m_sktpResponseLength = 26;
+*/			
+			if (HTTPGet ( wicHTTPTarget, wicURLPath, pResponseBuffer, m_sktpResponseLength))
+			{
+				if ( m_sktpResponseLength > 0 )
+				{
+					m_modemInputBufferPos = 0;
+					m_modemInputBufferLength = 0;
+					m_modemInputBuffer[0] = '\0';
+
+					int i =0;
+					u8 lsb = m_sktpResponseLength % 256;
+					u8 msb = m_sktpResponseLength & 256;
+					logger->Write ("launchWiCCommand", LogNotice, "payload length %u msb: %u lsb: %u payload '%s'",m_sktpResponseLength,msb,lsb, pResponseBuffer  );
+					if (m_sktpResponseLength == 1)
+						logger->Write ("launchWiCCommand", LogNotice, "Disclosing payload: '%s' %i", pResponseBuffer[0],pResponseBuffer[0] );
+					i= writeCharsToFrontend( 0, 1); //dummy byte
+					i= writeCharsToFrontend( (unsigned char *)msb, 1);
+					i= writeCharsToFrontend( (unsigned char *)lsb, 1);
+					i= writeCharsToFrontend( (unsigned char *)pResponseBuffer, m_sktpResponseLength);
+				}
+			}
+		}
+		else if (cmd == 8)
+		{
+			logger->Write ("launchWiCCommand", LogNotice, "before processing wic command 8: setting default url %s ", m_wicStandardHTTPTarget.urlPath);
+			logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName before");
+			boolean success = parseURL( m_wicStandardHTTPTarget, m_modemCommand, m_modemCommandLength);
+			logger->Write ("launchWiCCommand", LogNotice, "processing wic command 8: setting default url %s ", m_wicStandardHTTPTarget.urlPath);
+			logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName after");
+
+		}
+		else{
+			logger->Write ("launchWiCCommand", LogNotice, "Ignoring unhandled wic command : %u", cmd);
+		}
+		m_modemCommandLength = 0;
+		m_modemCommand[0] = '\0';
+	}
+
+}
+
+void CSidekickNet::setWiCEmuWriteMode( bool mode  = false){
+	m_WiCEmuIsWriteMode = mode;
+}
+
+void CSidekickNet::handleWiC64ExpEmulation( bool silent = false)
+{
+}
+
 void CSidekickNet::handleModemEmulation( bool silent = false)
 {
 	//if ( !silent && m_modemEmuType == 0)
 	//	usbPnPUpdate(); //still try to detect usb modem hot plugged
 
+	if ( m_modemEmuType == SK_WIC64_EXP_EMULATION ){
+		if (strcmp( m_currentKernelRunning, "m" ) == 0 && (m_modemInputBufferLength + m_modemOutputBufferLength + m_modemCommandLength) >0 )
+			cleanUpModemEmuSocket();
+		handleWiC64ExpEmulation(silent);
+		return;
+	}
+
+
 	if (  m_modemEmuType == 0 ) return;
 
 	if ( (strcmp( m_currentKernelRunning, "m" ) == 0) && m_isBBSSocketConnected){
 		cleanUpModemEmuSocket();
+		m_wicStandardHTTPTarget.urlPath[0] = '\0';
+
 	}
 
 	if ( m_modemEmuType == SK_MODEM_SWIFTLINK )

@@ -176,6 +176,9 @@ public:
 	void addToModemOutputBuffer( unsigned char );
 	unsigned char getCharFromInputBuffer();
 	void handleModemEmulation(bool);
+	void launchWiCCommand(u8,u8);
+	void setWiCEmuWriteMode(bool);
+	void handleWiC64ExpEmulation(bool);
 	unsigned getModemEmuType();
 	void setModemEmuType(unsigned);
 	bool isModemSocketConnected();
@@ -189,11 +192,12 @@ private:
 
 	typedef struct {
 		CString hostName;
-		int port;
+		unsigned port;
 		CIPAddress ipAddress;
 		CString logPrefix;
 		bool valid;
 		u8 attempts;
+		char urlPath[256];
 	} remoteHTTPTarget;
 	
 	typedef enum {
@@ -208,6 +212,7 @@ private:
 	void EnableWebserver();
 	CIPAddress getIPForHost( const char *, bool & );
 	boolean HTTPGet (remoteHTTPTarget & target, const char * path, char *pBuffer, unsigned & nLengthRead);
+	boolean parseURL( remoteHTTPTarget &, char *, u16);
 	void usbPnPUpdate();
 	void cleanUpModemEmuSocket();
 	int readCharFromFrontend( unsigned char * );
@@ -290,6 +295,9 @@ private:
 	boolean  m_wasSktpScreenFreshlyEntered;
 	boolean  m_isMenuScreenUpdateNeeded;
 	boolean  m_isC128;
+	//boolean  m_WiCEmuSendCommand;
+	boolean  m_WiCEmuIsWriteMode;
+	boolean  m_WiCEmuIsWriteModeOld;
 	boolean  m_isBBSSocketConnected;
 	boolean  m_isBBSSocketFirstReceive;
 	u8       m_BBSSocketDisconnectPlusCount;
@@ -316,6 +324,7 @@ private:
 	remoteHTTPTarget m_CSDB;
 	remoteHTTPTarget m_CSDB_HVSC;
 	remoteHTTPTarget m_ModarchiveAPI;
+	remoteHTTPTarget m_wicStandardHTTPTarget;
 };
 
 #endif
