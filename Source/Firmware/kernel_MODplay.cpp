@@ -38,6 +38,9 @@
 #include <math.h>
 #include "config.h"
 
+#define LIBOPENMPT
+
+
 #ifndef LIBOPENMPT
 #define POCKETMOD_IMPLEMENTATION
 #include "pocketmod.h"

@@ -185,17 +185,18 @@ LIBS += \
 	$(CIRCLE_STDLIB_DIR)/src/circle-mbedtls/libcircle-mbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedx509.a \
-	$(MBEDTLS_DIR)/library/libmbedcrypto.a
+	$(MBEDTLS_DIR)/library/libmbedcrypto.a \
+	libs/libopenmpt.a
 endif
 
 #work in progress, one day we should be able to enable/disable libopenmpt
 #for this the docker builder needs to be changed
-ifeq ($(kernel), menu)
+#ifeq ($(kernel), menu)
 #ifeq ($(libopenmpt), on)
-ifeq ($(net), on)
-LIBS += libs/libopenmpt.a
-endif
-endif
+#ifeq ($(net), on)
+#LIBS += libs/libopenmpt.a
+#endif
+#endif
 
 ifeq ($(net), on)
 
