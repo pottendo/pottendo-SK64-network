@@ -2218,7 +2218,7 @@ void CSidekickNet::launchWiCCommand( u8 cmd, u8 cmdState ){
 
 					int i =0;
 					u8 lsb = m_sktpResponseLength % 256;
-					u8 msb = m_sktpResponseLength & 256;
+					u8 msb = m_sktpResponseLength / 256;
 					logger->Write ("launchWiCCommand", LogNotice, "payload length %u msb: %u lsb: %u payload '%s'",m_sktpResponseLength,msb,lsb, pResponseBuffer  );
 					if (m_sktpResponseLength == 1)
 						logger->Write ("launchWiCCommand", LogNotice, "Disclosing payload: '%s' %i", pResponseBuffer[0],pResponseBuffer[0] );

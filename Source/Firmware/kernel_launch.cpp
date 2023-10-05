@@ -363,9 +363,6 @@ void CKernelLaunch::Run( void )
 	unsigned netDelay = _playingPSID ? 180000000: 3500000; //TODO: improve this
 	unsigned followUpDelay = (pSidekickNet->getModemEmuType() == 1) ? 300000 : 300; //(_playingPSID ? 3000: 300);
 
-	pSidekickNet->setModemEmuType(3); //auto-enable wic64 emu FIXME
-
-
 	if (pSidekickNet->getModemEmuType() == 3) //WiC64-2-ExpansionPort emulation is configured by user
 	{
 		netDelay = 3500000;
@@ -751,23 +748,10 @@ void CKernelLaunch::FIQHandler (void *pParam)
 		return;
 	}
 
-	#ifdef WITH_NET
-/*
-	if ( !disableCart && CPU_WRITES_TO_BUS && IO2_ACCESS ) // writing #123 to $df00 (IO2) will disable the cartridge
-	{
-		READ_D0to7_FROM_BUS( D )
 
-		if ( GET_IO12_ADDRESS == 0 && D == 123 )
-		{
-			disableCart = 1;
-			SET_GPIO( bGAME | bEXROM | bNMI );
-			FINISH_BUS_HANDLING
-			return;
-		}
-	}
-	*/
 	if ( disableCart )
 	{
+		#ifdef WITH_NET
 		if ( wic2expEnabled )
 		{
 			//C64 reads bytes from WiC642ExpansionPort emulation
@@ -923,7 +907,9 @@ void CKernelLaunch::FIQHandler (void *pParam)
 				}
 			}
 		}
-		else if ( _playingPSID )
+		else 
+		#endif
+		if ( _playingPSID )
 		{
 			if ( IO2_ACCESS && CPU_READS_FROM_BUS && GET_IO12_ADDRESS == 0x55 )
 			{
@@ -952,6 +938,7 @@ void CKernelLaunch::FIQHandler (void *pParam)
 			OUTPUT_LATCH_AND_FINISH_BUS_HANDLING
 			return;
 		}
+		#ifdef WITH_NET
 		else if ( swiftLinkEnabled )
 		{
 			if ( IO1_ACCESS && CPU_READS_FROM_BUS ) // && (GET_IO12_ADDRESS >= 0x00 && GET_IO12_ADDRESS <= 0x03))
