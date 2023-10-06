@@ -329,6 +329,32 @@ void CKernelLaunch::Run( void )
 	resetFromCodeState = 0;
 
 	#ifdef WITH_NET
+		//if wic64-2-expansionport emulation is on, patch the PRG ($DD -> $DE)
+		if (pSidekickNet->getModemEmuType() == 3) //WiC64-2-ExpansionPort emulation is configured by user
+		{
+			u32 patchCount = 0;
+			for (u32 i = 0; i < prgSize; i++)
+			{
+				//replace $DD when used in LDA,LDX,LDY,STA,STX,STY
+				if ( prgData[i] == 0xdd && i > 1 )
+				{
+					if (
+						prgData[i-2] == 0xac || 
+						prgData[i-2] == 0xad || 
+						prgData[i-2] == 0xae || 
+						prgData[i-2] == 0x8c || 
+						prgData[i-2] == 0x8d || 
+						prgData[i-2] == 0x8e 
+					){
+						prgData[i] = 0xde;
+						patchCount++;
+					}
+					else
+						logger->Write( "Launcher", LogNotice, "wic patching: found $dd but before is %u", prgData[i-2] );
+				}
+			}
+			logger->Write( "Launcher", LogNotice, "wic-emu jit patching: replaced %u bytes", patchCount );
+		}
 
 	wic2expEnabled = false;
 
