@@ -1575,8 +1575,12 @@ boolean CSidekickNet::parseURL( remoteHTTPTarget & target, char * urlBuffer, u16
 		target = m_ModarchiveAPI;
 	}
 	else{
-		logger->Write( "parseURL", LogNotice, "Error: Unknown host: >%s<", hostName);
-		target = m_CSDB;
+		logger->Write( "parseURL", LogNotice, "Resolving unknown host: >%s<", hostName);
+		target.hostName = hostName;
+		target.port = protocolType;
+		target.attempts = 0;
+		target.valid = false;
+		target.logPrefix = getLoggerStringForHost( hostName, protocolType);
 	}
 	//logger->Write( "parseURL", LogNotice, "hostname is ok, now memcopy");
 	u16 pathLength = urlLength - i - limit -3;
@@ -2159,7 +2163,7 @@ void CSidekickNet::launchWiCCommand( u8 cmd, u8 cmdState ){
 	unsigned char inputChar[bsize];
 	char * wicURLPath;
 	logger->Write ("launchWiCCommand", LogNotice, "entering");
-	int x = 0;
+	int x = 0, i = 0;
 	while ( readCharFromFrontend( inputChar ) == 1)
 	{
 		x++;
@@ -2184,7 +2188,7 @@ void CSidekickNet::launchWiCCommand( u8 cmd, u8 cmdState ){
 					wicHTTPTarget = m_wicStandardHTTPTarget;
 					wicURLPath = wicHTTPTarget.urlPath;
 					char * suffix = &m_modemCommand[1];
-					logger->Write ("launchWiCCommand", LogNotice, wicHTTPTarget.hostName, "hostName");
+					//logger->Write ("launchWiCCommand", LogNotice, wicHTTPTarget.hostName, "hostName");
 					logger->Write ("launchWiCCommand", LogNotice, "suffix: '%s' , path: %s", suffix, wicURLPath);
 					strcat( wicURLPath, suffix);
 					logger->Write ("launchWiCCommand", LogNotice, "processing wic command 1 with shorthand (!), urlPath is: '%s'", wicURLPath);
@@ -2216,27 +2220,52 @@ void CSidekickNet::launchWiCCommand( u8 cmd, u8 cmdState ){
 					m_modemInputBufferLength = 0;
 					m_modemInputBuffer[0] = '\0';
 
-					int i =0;
-					u8 lsb = m_sktpResponseLength % 256;
-					u8 msb = m_sktpResponseLength / 256;
+					u8 lsb = (m_sktpResponseLength) % 256;
+					u8 msb = (m_sktpResponseLength) / 256;
 					logger->Write ("launchWiCCommand", LogNotice, "payload length %u msb: %u lsb: %u payload '%s'",m_sktpResponseLength,msb,lsb, pResponseBuffer  );
 					if (m_sktpResponseLength == 1)
 						logger->Write ("launchWiCCommand", LogNotice, "Disclosing payload: '%s' %i", pResponseBuffer[0],pResponseBuffer[0] );
-					i= writeCharsToFrontend( 0, 1); //dummy byte
+					i= writeCharsToFrontend( (unsigned char *)65, 1); //dummy byte
 					i= writeCharsToFrontend( (unsigned char *)msb, 1);
 					i= writeCharsToFrontend( (unsigned char *)lsb, 1);
 					i= writeCharsToFrontend( (unsigned char *)pResponseBuffer, m_sktpResponseLength);
+					//i= writeCharsToFrontend( (unsigned char *)66, 1); //dummy byte
 				}
 			}
 		}
-		else if (cmd == 8)
+		else if (cmd == 6) // get ip address
 		{
-			logger->Write ("launchWiCCommand", LogNotice, "before processing wic command 8: setting default url %s ", m_wicStandardHTTPTarget.urlPath);
-			logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName before");
+			logger->Write ("launchWiCCommand", LogNotice, "processing wic command 6: get ip address");
+			CString strHelper;
+			unsigned char tmp[50];
+			GetNetConfig()->GetIPAddress ()->Format (&strHelper);
+			unsigned l = sprintf( (char* )tmp, strHelper );
+			//logger->Write ("CSidekickNet", LogNotice, "get ip: sh:'%s', tmp:'%s'", strHelper, tmp );
+			i= writeCharsToFrontend( (unsigned char *)65, 1); //dummy byte
+			i= writeCharsToFrontend( (unsigned char *)0, 1);
+			i= writeCharsToFrontend( (unsigned char *)l, 1);
+			i = writeCharsToFrontend(tmp, l);
+		}
+		else if (cmd == 8) // set default server
+		{
+			//logger->Write ("launchWiCCommand", LogNotice, "before processing wic command 8: setting default url %s ", m_wicStandardHTTPTarget.urlPath);
+			//logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName before");
 			boolean success = parseURL( m_wicStandardHTTPTarget, m_modemCommand, m_modemCommandLength);
 			logger->Write ("launchWiCCommand", LogNotice, "processing wic command 8: setting default url %s ", m_wicStandardHTTPTarget.urlPath);
-			logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName after");
+			//logger->Write ("launchWiCCommand", LogNotice, m_wicStandardHTTPTarget.hostName, "hostName after");
 
+		}
+		else if (cmd == 9) // rem command
+		{
+			logger->Write ("launchWiCCommand", LogNotice, "processing wic command 9: rem command: '%s'",m_modemCommand);
+		}
+		else if (cmd == 10) // get connected wlan name
+		{
+			logger->Write ("launchWiCCommand", LogNotice, "processing wic command 10: get connected wlan name: '%s'",m_modemCommand);
+			i= writeCharsToFrontend( (unsigned char *)65, 1); //dummy byte
+			i= writeCharsToFrontend( (unsigned char *)0, 1);
+			i= writeCharsToFrontend( (unsigned char *)12, 1);
+			i= writeCharsToFrontend((unsigned char *)"sidekickwlan", 12);
 		}
 		else{
 			logger->Write ("launchWiCCommand", LogNotice, "Ignoring unhandled wic command : %u", cmd);
