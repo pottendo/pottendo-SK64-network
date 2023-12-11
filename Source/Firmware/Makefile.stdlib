@@ -9,6 +9,7 @@ include $(CIRCLE_STDLIB_DIR)/Config.mk
 CIRCLEHOME  ?= $(CIRCLE_STDLIB_DIR)/libs/circle
 NEWLIBDIR   ?= $(CIRCLE_STDLIB_DIR)/install/$(NEWLIB_ARCH)
 MBEDTLS_DIR ?= $(CIRCLE_STDLIB_DIR)/libs/mbedtls
+OPENMPT_DIR ?= $(CIRCLE_STDLIB_DIR)/libs/openmpt
 
 CFLAGS += \
 			-I $(STDDEF_INCPATH) \
@@ -186,7 +187,7 @@ LIBS += \
 	$(MBEDTLS_DIR)/library/libmbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedx509.a \
 	$(MBEDTLS_DIR)/library/libmbedcrypto.a \
-	libs/libopenmpt.a
+	$(OPENMPT_DIR)/bin/libopenmpt.a
 endif
 
 #work in progress, one day we should be able to enable/disable libopenmpt
@@ -194,7 +195,7 @@ endif
 #ifeq ($(kernel), menu)
 #ifeq ($(libopenmpt), on)
 #ifeq ($(net), on)
-#LIBS += libs/libopenmpt.a
+#LIBS += $(OPENMPT_DIR)/bin/libopenmpt.a
 #endif
 #endif
 
