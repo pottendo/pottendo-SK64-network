@@ -15,7 +15,8 @@ CFLAGS += \
 			-I $(STDDEF_INCPATH) \
 	   -I $(CIRCLE_STDLIB_DIR)/include \
 	   -I $(NEWLIBDIR)/include \
-	   -I $(MBEDTLS_DIR)/include
+	   -I $(MBEDTLS_DIR)/include \
+	   -I $(OPENMPT_DIR)/libopenmpt
 
 GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
 GIT_HASH=`git rev-parse --short HEAD`
@@ -181,7 +182,9 @@ LIBS += \
 
 ifeq ($(net), on)
 INCLUDE += \
-	   -I $(MBEDTLS_DIR)/include
+	   -I $(MBEDTLS_DIR)/include \
+	   -I $(OPENMPT_DIR)/libopenmpt
+
 LIBS += \
 	$(CIRCLE_STDLIB_DIR)/src/circle-mbedtls/libcircle-mbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedtls.a \

@@ -46,7 +46,7 @@
 #include "pocketmod.h"
 #else
 #include <string>
-#include "libs/openmpt/libopenmpt/libopenmpt.hpp"
+#include <libopenmpt.hpp>
 
 struct fake_context
 {
