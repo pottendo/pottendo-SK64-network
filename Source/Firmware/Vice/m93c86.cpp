@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <string.h> /* for memset */
+#include <cstdint>
 
 //#include "log.h"
 #include "m93c86.h"
