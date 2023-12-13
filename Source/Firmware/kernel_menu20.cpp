@@ -524,8 +524,8 @@ void convertScreenToBitmap( unsigned char *framebuffer )
 					if ( col & 16 )
 					{
 						// some nice dilatation for the low-res
-						u8 vt = fontBitmap[ fx + a + ( fy + min(fontH-1,b + 1) ) * 32 * fontW ];
-						u8 vb = fontBitmap[ fx + a + ( fy + max(0,b - 1) ) * 32 * fontW ];
+						u8 vt = fontBitmap[ fx + a + ( fy + minsk(fontH-1,b + 1) ) * 32 * fontW ];
+						u8 vb = fontBitmap[ fx + a + ( fy + maxsk(0,b - 1) ) * 32 * fontW ];
 						if ( vt >= 128 && !(vb >= 128) ) v |= 128;
 						if ( vt >= 128 && b == 0 ) v |= 128;
 					}
@@ -944,7 +944,7 @@ void CKernelMenu::Run( void )
 		{
 			if ( cfgVIC_Emulation )
 			{
-				ledActivityBrightness1 = ledActivityBrightness2 = min( 511, vic656x.curSampleOutput >> 5 );
+				ledActivityBrightness1 = ledActivityBrightness2 = minsk( 511, vic656x.curSampleOutput >> 5 );
 			} else
 				ledActivityBrightness1 = ledActivityBrightness2 = 0;
 		}
@@ -1249,10 +1249,10 @@ void CKernelMenu::Run( void )
 				int delta = 0;
 				if ( lastChar == 79 ) delta = -5;
 				if ( lastChar == 80 ) delta = +5;
-				if ( curTimPos == 0 && delta ) 	WAIT_FOR_SIGNALS = max( 0, WAIT_FOR_SIGNALS + delta );
-				if ( curTimPos == 1 && delta ) 	WAIT_CYCLE_MULTIPLEXER = max( 0, WAIT_CYCLE_MULTIPLEXER + delta );
-				if ( curTimPos == 2 && delta ) 	WAIT_CYCLE_READ = max( 0, WAIT_CYCLE_READ + delta );
-				if ( curTimPos == 3 && delta ) 	WAIT_CYCLE_WRITEDATA = max( 0, WAIT_CYCLE_WRITEDATA + delta );
+				if ( curTimPos == 0 && delta ) 	WAIT_FOR_SIGNALS = maxsk( 0, WAIT_FOR_SIGNALS + delta );
+				if ( curTimPos == 1 && delta ) 	WAIT_CYCLE_MULTIPLEXER = maxsk( 0, WAIT_CYCLE_MULTIPLEXER + delta );
+				if ( curTimPos == 2 && delta ) 	WAIT_CYCLE_READ = maxsk( 0, WAIT_CYCLE_READ + delta );
+				if ( curTimPos == 3 && delta ) 	WAIT_CYCLE_WRITEDATA = maxsk( 0, WAIT_CYCLE_WRITEDATA + delta );
 				sprintf( temp, "SIGNALS     = %d", (u32)WAIT_FOR_SIGNALS );
 				printC64( 0, 0, temp, skinValues.SKIN_BROWSER_TEXT_HEADER, 0 );
 				sprintf( temp, "MULTIPLEXER = %d", (u32)WAIT_CYCLE_MULTIPLEXER );

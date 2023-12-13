@@ -89,7 +89,7 @@ for ( int y = 0; y < 147; y++ )
 
 		animationState[ x + y * 192 / 8 ] = pixelState;
 
-		retVal &= ~framebuffer[ x + 8 + min( 199, ( y + 6*8 + 1 )) * 320/8 ];
+		retVal &= ~framebuffer[ x + 8 + minsk( 199, ( y + 6*8 + 1 )) * 320/8 ];
 
 		int bx = (x * 8) / 24;
 		int byteX = ( (x * 8) % 24 ) / 8;

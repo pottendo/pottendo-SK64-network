@@ -216,7 +216,7 @@ int convChar( char c, u32 convert )
 
 void printC64( u32 x, u32 y, const char *t, u8 color, u8 flag, u32 convert, u32 maxL )
 {
-	u32 l = min( strlen( t ), maxL );
+	u32 l = minsk( strlen( t ), maxL );
 
 	for ( u32 i = 0; i < l; i++ )
 	{
@@ -608,8 +608,8 @@ static int joyX = 0, joyY = 0, joyIdx = -1;
 
 int trySnap( int mx, int my )
 {
-	int tX = min( 39, max( 0, joyX + mx ) );
-	int tY = min( 39, max( 0, joyY + my ) );
+	int tX = minsk( 39, maxsk( 0, joyX + mx ) );
+	int tY = minsk( 39, maxsk( 0, joyY + my ) );
 	int minD2 = 100000000;
 	int minIdx = -1;
 	for ( int i = 0; i < nJoyItems; i++ )
@@ -1466,7 +1466,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 						typeCurPos ++; 
 				}
 
-				ls = min( 32, strlen( (const char*)searchName ) );
+				ls = minsk( 32, strlen( (const char*)searchName ) );
 				for ( int i = 0; i < ls; i++ )
 					search[ i ] = convChar( searchName[ i ], 3);
 
@@ -1474,7 +1474,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 				{
 					// convert name for search
 					memset( name, 0, 512 );
-					l = min( ls, (int)strlen( (const char*)dir[ searchPos ].name ) );
+					l = minsk( ls, (int)strlen( (const char*)dir[ searchPos ].name ) );
 					for ( c = 0; c < l; c++ )
 					{
 						if ( search[ c ] != convChar( dir[ searchPos ].name[ c ], 3 ) )
@@ -2007,7 +2007,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 				if ( settings[ curSettingsLine ] < 0 )
 					settings[ curSettingsLine ] = rangeSettings[ curSettingsLine ] - 1;
 			} else
-				settings[ curSettingsLine ] = max( 0, settings[ curSettingsLine ] );
+				settings[ curSettingsLine ] = maxsk( 0, settings[ curSettingsLine ] );
 
 		} else
 		// right 
@@ -2016,7 +2016,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 			settings[ curSettingsLine ] ++;
 			if ( rangeSettings[ curSettingsLine ] < 15 )
 				settings[ curSettingsLine ] %= rangeSettings[ curSettingsLine ]; else
-				settings[ curSettingsLine ] = min( settings[ curSettingsLine ], rangeSettings[ curSettingsLine ] - 1 );
+				settings[ curSettingsLine ] = minsk( settings[ curSettingsLine ], rangeSettings[ curSettingsLine ] - 1 );
 		} else
 		// down
 		if ( k == VK_DOWN )

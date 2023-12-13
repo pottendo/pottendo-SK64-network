@@ -724,7 +724,7 @@ void CKernelEF::Run( void )
 			if ( l * 13 >= 240 )
 				b1[ 18 ] = 0;
 	
-			int sx = max( 0, ( 240 - charWidth * l ) / 2 - 1 );
+			int sx = maxsk( 0, ( 240 - charWidth * l ) / 2 - 1 );
 			tftPrint( b1, sx, 220-16, c1, charWidth == 16 ? 0 : -3 );	
 
 			if ( ef.bankswitchType == BS_MAGICDESK )
@@ -764,7 +764,7 @@ void CKernelEF::Run( void )
 			if ( l * 13 >= 240 )
 				b1[ 18 ] = 0;
 	
-			sx = max( 0, ( 240 - charWidth * l ) / 2 - 1 );
+			sx = maxsk( 0, ( 240 - charWidth * l ) / 2 - 1 );
 			tftPrint( b1, sx, 220, c3, charWidth == 16 ? 0 : -3 );	
 
 		} else
@@ -909,7 +909,7 @@ void CKernelEF::Run( void )
 		memset( m93c86_data, 0, 2048 );
 		if ( !readFile( logger, DRIVE, fn, m93c86_data, &size ) && gmod2EEPROM_data )
 		{
-			memcpy( m93c86_data, gmod2EEPROM, min( 2048, M93C86_SIZE ) );
+			memcpy( m93c86_data, gmod2EEPROM, minsk( 2048, M93C86_SIZE ) );
 		}
 	}
 
@@ -1040,7 +1040,7 @@ void CKernelEF::Run( void )
 				char b1[512];
 				sprintf( b1, "CRT saved!" );
 				u32 l = strlen( b1 );
-				u32 sx = max( 0, ( 240 - 16 * l ) / 2 - 1 );
+				u32 sx = maxsk( 0, ( 240 - 16 * l ) / 2 - 1 );
 				tftPrint( b1, sx, 180, c1, 0 );	
 				tftInitImm();
 				tftSendFramebuffer16BitImm( tftFrameBuffer );

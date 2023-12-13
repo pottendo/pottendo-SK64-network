@@ -138,7 +138,7 @@ int d64ParseExtract( u8 *d64buf, u32 d64size, u32 job, u8 *dst, s32 *s, u32 pare
 			strncpy( fln2, (const char*)&fileInfo[ 3 ], 16 );
 			fln2[ 16 ] = 0;
 
-			u32 nt = min( *fileInfo & 7, 5 );
+			u32 nt = minsk( *fileInfo & 7, 5 );
 
 			if ( !( *fileInfo & 0x80 ) )
 				types[ nt ][ 0 ] = '*';

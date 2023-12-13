@@ -151,7 +151,7 @@ u8 PETSCII2ScreenCode( u8 c )
 
 void printC64( u32 x, u32 y, const char *t, u8 color, u8 flag, u32 convert, u32 maxL )
 {
-	u32 l = min( strlen( t ), maxL );
+	u32 l = minsk( strlen( t ), maxL );
 
 	for ( u32 i = 0; i < l; i++ )
 	{
@@ -1038,7 +1038,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 		{
 			if ( rangeSettings[ curSettingsLine ] == 17 ) // a volume variable
 			{
-				settings[ curSettingsLine ] = max( 0, settings[ curSettingsLine ] - 1 );
+				settings[ curSettingsLine ] = maxsk( 0, settings[ curSettingsLine ] - 1 );
 			} else
 			{
 				settings[ curSettingsLine ] --;
@@ -1047,7 +1047,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 					if ( settings[ curSettingsLine ] < 0 )
 						settings[ curSettingsLine ] = rangeSettings[ curSettingsLine ] - 1;
 				} else
-					settings[ curSettingsLine ] = max( 0, settings[ curSettingsLine ] );
+					settings[ curSettingsLine ] = maxsk( 0, settings[ curSettingsLine ] );
 
 			}
 			if ( curSettingsLine == 17 ) // PWM or HDMI -> force to PWM if HDMI not available
@@ -1063,7 +1063,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 			settings[ curSettingsLine ] ++;
 			if ( rangeSettings[ curSettingsLine ] < 15 )
 				settings[ curSettingsLine ] %= rangeSettings[ curSettingsLine ]; else
-				settings[ curSettingsLine ] = min( settings[ curSettingsLine ], rangeSettings[ curSettingsLine ] - 1 );
+				settings[ curSettingsLine ] = minsk( settings[ curSettingsLine ], rangeSettings[ curSettingsLine ] - 1 );
 
 			if ( curSettingsLine == 17 ) // PWM or HDMI -> force to PWM if HDMI not available
 			{

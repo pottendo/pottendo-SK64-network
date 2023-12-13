@@ -164,7 +164,7 @@ u8 PETSCII2ScreenCode( u8 c )
 
 void printC64( u32 x, u32 y, const char *t, u8 color, u8 flag, u32 convert, u32 maxL )
 {
-	u32 l = min( strlen( t ), maxL );
+	u32 l = minsk( strlen( t ), maxL );
 
 	for ( u32 i = 0; i < l; i++ )
 	{
@@ -1118,13 +1118,13 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 			settingsMem[ curSettingsLineMem ] --;
 			if ( settingsMem[ curSettingsLineMem ] < 0 )
 				settingsMem[ curSettingsLineMem ] = rangeSettingsMem[ curSettingsLineMem ] - 1; else
-				settingsMem[ curSettingsLineMem ] = max( 0, settingsMem[ curSettingsLineMem ] );
+				settingsMem[ curSettingsLineMem ] = maxsk( 0, settingsMem[ curSettingsLineMem ] );
 
 			if ( rangeSettingsMem[ curSettingsLineMem ] < 15 )
 			{
 				settingsMem[ curSettingsLineMem ] %= rangeSettingsMem[ curSettingsLineMem ]; 
 			} else
-				settingsMem[ curSettingsLineMem ] = max( 0, settingsMem[ curSettingsLineMem ] );
+				settingsMem[ curSettingsLineMem ] = maxsk( 0, settingsMem[ curSettingsLineMem ] );
 
 		} else
 		// right 
@@ -1133,7 +1133,7 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal )
 			settingsMem[ curSettingsLineMem ] ++;
 			if ( rangeSettingsMem[ curSettingsLineMem ] < 15 )
 				settingsMem[ curSettingsLineMem ] %= rangeSettingsMem[ curSettingsLineMem ]; else
-				settingsMem[ curSettingsLineMem ] = min( settingsMem[ curSettingsLineMem ], rangeSettingsMem[ curSettingsLineMem ] - 1 );
+				settingsMem[ curSettingsLineMem ] = minsk( settingsMem[ curSettingsLineMem ], rangeSettingsMem[ curSettingsLineMem ] - 1 );
 		} else
 		// down
 		if ( k == 17 )

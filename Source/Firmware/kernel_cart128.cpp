@@ -144,7 +144,7 @@ void CKernelCart128::Run( void )
 			if ( l * 13 >= 240 )
 				b1[ 18 ] = 0;
 	
-			int sx = max( 0, ( 240 - charWidth * l ) / 2 - 1 );
+			int sx = maxsk( 0, ( 240 - charWidth * l ) / 2 - 1 );
 			tftPrint( b1, sx, 220-16, c3, charWidth == 16 ? 0 : -3 );	
 
 			if ( isMegabitROM )
@@ -152,7 +152,7 @@ void CKernelCart128::Run( void )
 				sprintf( b1, "mEGABIT 128 rom" );
 				int charWidth = 13;
 				int l = strlen( b1 );
-				int sx = max( 0, ( 240 - charWidth * l ) / 2 - 1 );
+				int sx = maxsk( 0, ( 240 - charWidth * l ) / 2 - 1 );
 				tftPrint( b1, sx, 220-16-20, c1, charWidth == 16 ? 0 : -3 );	
 			}
 		}

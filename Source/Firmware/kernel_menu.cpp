@@ -1275,7 +1275,7 @@ void CKernelMenu::Run( void )
 				int x = delayFrame - 1;
 				if ( postDelayFrame ) x = (6*FADE_SLOWER - postDelayFrame);
 
-				int s = min( 4, max( 0, x/(2*FADE_SLOWER) ) );
+				int s = minsk( 4, maxsk( 0, x/(2*FADE_SLOWER) ) );
 				for ( int i = 0; i < 1000; i++ )
 				{
 					c64color[ i ] = fadeTabStep[ c64color[ i ] ][ s ];
@@ -1340,7 +1340,7 @@ void CKernelMenu::Run( void )
 				int x = delayFrame - 1;
 				if ( postDelayFrame ) x = (6*FADE_SLOWER - postDelayFrame);
 
-				int s = min( 4, max( 0, x/(2*FADE_SLOWER) ) );
+				int s = minsk( 4, maxsk( 0, x/(2*FADE_SLOWER) ) );
 
 				if ( ( screenFadeTasks & 2 ) || initializeSpriteColors )
 				{
@@ -1380,7 +1380,7 @@ void CKernelMenu::Run( void )
 						{ POKE( RELOC_BASE + 0x0e00 + 98, fadeTabStep[ skinValues.SKIN_BACKGROUND_GFX_COLOR ][ s ] ); }
 				}
 
-				int s2 = min( 3, s + 1 );
+				int s2 = minsk( 3, s + 1 );
 
 				if ( initializeSpriteColors )
 				{
@@ -1726,8 +1726,8 @@ void CKernelMenu::Run( void )
 			if ( menuSpeedCodeLength > 0 )
 			{
 				if ( modePALNTSC == 1 || modePALNTSC == 2 )
-					speedCodeMaxLength -= max( 0, ( menuSpeedCodeLength - 0x400 ) ); else
-					speedCodeMaxLength -= max( 0, ( menuSpeedCodeLength - 0x700 ) );
+					speedCodeMaxLength -= maxsk( 0, ( menuSpeedCodeLength - 0x400 ) ); else
+					speedCodeMaxLength -= maxsk( 0, ( menuSpeedCodeLength - 0x700 ) );
 			}
 
 			nBytesToTransfer = 7 * 8 * 64;

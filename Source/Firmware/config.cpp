@@ -657,8 +657,8 @@ int readFavorites( CLogger *logger, char *DRIVE )
 			int nGroup1 = nElements[ p0 ] +  nElements[ p1 ] + 4;
 			int nGroup2 = nElements[ p2 ] +  nElements[ p3 ] + 4;
 
-			int sizeL = max( nGroup1, nGroup2 );
-			int sizeS = min( nGroup1, nGroup2 );
+			int sizeL = maxsk( nGroup1, nGroup2 );
+			int sizeS = minsk( nGroup1, nGroup2 );
 
 			if ( sizeL <= nRows && sizeS <= nRowsS )
 			{
@@ -678,8 +678,8 @@ int readFavorites( CLogger *logger, char *DRIVE )
 			int nGroup1 = nElements[ p0 ] +  nElements[ p1 ] + nElements[ p2 ] + 6;
 			int nGroup2 = nElements[ p3 ] + 2;
 
-			int sizeL = max( nGroup1, nGroup2 );
-			int sizeS = min( nGroup1, nGroup2 );
+			int sizeL = maxsk( nGroup1, nGroup2 );
+			int sizeS = minsk( nGroup1, nGroup2 );
 
 			if ( sizeL <= nRows && sizeS <= nRowsS )
 			{
@@ -736,7 +736,7 @@ int readFavorites( CLogger *logger, char *DRIVE )
 						nElements[ pg[ g ] ] --;
 					if ( nElements[ pg[ g ] ] < 0 ) nElements[ pg[ g ] ] = 0;
 					/*{ 
-						nElements[ pg[ g ] ] = max( 0, nElements[ pg[ g ] ] - (y - nRowsS) );
+						nElements[ pg[ g ] ] = maxsk( 0, nElements[ pg[ g ] ] - (y - nRowsS) );
 					}*/
 				}
 

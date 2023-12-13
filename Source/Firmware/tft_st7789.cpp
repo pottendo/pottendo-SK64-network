@@ -717,7 +717,7 @@ void tftCopyBackground2Framebuffer( int x, int y, int w, int h )
 int ditherColor( int v, int x, int y, int d )
 {
 	const int tm[ 4 * 4 ] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
-	return min( 255, max( 0, (int)( (float)v + (float)d * ( tm[ ( x & 3 ) + ( y & 3 ) * 4 ] / 16.0f - 0.5f ) ) ) );
+	return minsk( 255, maxsk( 0, (int)( (float)v + (float)d * ( tm[ ( x & 3 ) + ( y & 3 ) * 4 ] / 16.0f - 0.5f ) ) ) );
 }
 
 void tftBlendRGBA( u32 r_, u32 g_, u32 b_, u32 a, unsigned char *dst, int dither )
@@ -805,8 +805,8 @@ int tftLoadBackgroundTGA( const char *drive, const char *name, int dither )
 int tftLoadBackgroundTGAMemory(  unsigned char * tempTGA2, int w, int h, int dither)
 {
 	int bytesPerPixel = 3; 
-	for ( int y = 0; y < min( 240, h ); y++ )
-		for ( int x = 0; x < min( 240, w ); x++ )
+	for ( int y = 0; y < minsk( 240, h ); y++ )
+		for ( int x = 0; x < minsk( 240, w ); x++ )
 		{
 			unsigned char *p = &tempTGA2[ bytesPerPixel * ( x + y * w ) ];
 
@@ -862,7 +862,7 @@ int tftLoadSlideShowTGA( const char *drive, const char *name, int dither )
 		for ( int j = 0; j < imgHeight; j++ )
 		{
 			u32 xp = 0;
-			for ( int i = 0; i < min( 240, imgWidth ) * bytesPerPixel; i += bytesPerPixel )
+			for ( int i = 0; i < minsk( 240, imgWidth ) * bytesPerPixel; i += bytesPerPixel )
 			{
 				unsigned char *p = &tga[ i + 0 + 18 + j * imgWidth * bytesPerPixel ];
 
@@ -914,7 +914,7 @@ void tftLoadCharset( const char *drive, const char *name )
 					for ( int a = -dilate; a <= dilate; a++ )
 						for ( int b = -dilate; b <= dilate; b++ )
 							if ( a * a + b * b != 2 * dilate * dilate )
-							if ( rgbChars[ c * 16 * 16 + (max(0,min(15,j+b))) * 16 + (max(0,min(15,i+a))) ] == col )
+							if ( rgbChars[ c * 16 * 16 + (maxsk(0,minsk(15,j+b))) * 16 + (maxsk(0,minsk(15,i+a))) ] == col )
 								set ++;
 
 					if ( set && rgbChars[ c * 16 * 16 + j * 16 + i ] == 255 )

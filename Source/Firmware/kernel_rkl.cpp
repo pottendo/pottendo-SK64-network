@@ -254,7 +254,7 @@ void CKernelRKL::Run( void )
 			if ( l * 16 >= 240 )
 				charWidth = 13;
 	
-			u32 sx = max( 0, ( 240 - charWidth * l ) / 2 - 1 );
+			u32 sx = maxsk( 0, ( 240 - charWidth * l ) / 2 - 1 );
 			tftPrint( b1, sx, 204, c3, charWidth == 16 ? 0 : -3 );	
 		}
 

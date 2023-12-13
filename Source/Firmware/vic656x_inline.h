@@ -890,7 +890,7 @@ __attribute__( ( always_inline ) ) inline void tickVideoVIC656x()
 
 	// keep number of columns
 	if ( vic656x.hCount == 1 )
-		vic656x.nTextCols = min( vic656x.regs[ 2 ] & 0x7f, (int)vic656x.maxTextCols );
+		vic656x.nTextCols = minsk( vic656x.regs[ 2 ] & 0x7f, (int)vic656x.maxTextCols );
 
 	switch ( vic656x.fetchState )
 	{
