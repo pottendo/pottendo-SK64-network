@@ -80,7 +80,7 @@ extern int screenType;
 #include <vc4/sound/vchiqsoundbasedevice.h>
 #endif
 
-#include <circle/hdmisoundbasedevice.h>
+#include <circle/sound/hdmisoundbasedevice.h>
 
 
 #include "lowlevel_arm64.h"

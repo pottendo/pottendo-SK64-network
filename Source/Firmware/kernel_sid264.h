@@ -94,14 +94,14 @@ extern unsigned int SID_DigiBoost[2];
 #include <circle/timer.h>
 #include <circle/logger.h>
 #include <circle/sched/scheduler.h>
-#include <circle/soundbasedevice.h>
+#include <circle/sound/soundbasedevice.h>
 #include <circle/types.h>
 #include <circle/gpioclock.h>
 #include <circle/gpiopin.h>
 #include <circle/gpiopinfiq.h>
 #include <circle/gpiomanager.h>
-#include <circle/pwmsoundbasedevice.h>
-#include <circle/i2ssoundbasedevice.h>
+#include <circle/sound/pwmsoundbasedevice.h>
+#include <circle/sound/i2ssoundbasedevice.h>
 #include <circle/util.h>
 
 #ifdef USE_VCHIQ_SOUND

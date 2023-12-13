@@ -30,7 +30,7 @@
 #ifndef _sound_h_
 #define _sound_h_
 
-#include <circle/hdmisoundbasedevice.h>
+#include <circle/sound/hdmisoundbasedevice.h>
 
 #define PCMBufferSize (48000/4)
 #define QUEUE_SIZE_MSECS 	50		// size of the sound queue in milliseconds duration

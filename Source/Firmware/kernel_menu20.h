@@ -61,10 +61,10 @@ extern int screenType;
 #include <circle/gpiopin.h>
 #include <circle/gpiopinfiq.h>
 #include <circle/gpiomanager.h>
-//#include <circle/pwmsoundbasedevice.h>
-//#include <circle/i2ssoundbasedevice.h>
-#include <circle/soundbasedevice.h>
-#include <circle/hdmisoundbasedevice.h>
+//#include <circle/sound/pwmsoundbasedevice.h>
+//#include <circle/sound/i2ssoundbasedevice.h>
+#include <circle/sound/soundbasedevice.h>
+#include <circle/sound/hdmisoundbasedevice.h>
 #include <circle/util.h>
 
 #include <circle/dmachannel.h>
