@@ -9,14 +9,17 @@ include $(CIRCLE_STDLIB_DIR)/Config.mk
 CIRCLEHOME  ?= $(CIRCLE_STDLIB_DIR)/libs/circle
 NEWLIBDIR   ?= $(CIRCLE_STDLIB_DIR)/install/$(NEWLIB_ARCH)
 MBEDTLS_DIR ?= $(CIRCLE_STDLIB_DIR)/libs/mbedtls
+
+ifeq ($(libopenmpt), on)
 OPENMPT_DIR ?= $(CIRCLE_STDLIB_DIR)/libs/openmpt
+CFLAGS += -I $(OPENMPT_DIR)/libopenmpt
+endif
 
 CFLAGS += \
 			-I $(STDDEF_INCPATH) \
 	   -I $(CIRCLE_STDLIB_DIR)/include \
 	   -I $(NEWLIBDIR)/include \
-	   -I $(MBEDTLS_DIR)/include \
-	   -I $(OPENMPT_DIR)/libopenmpt
+	   -I $(MBEDTLS_DIR)/include
 
 GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
 GIT_HASH=`git rev-parse --short HEAD`
@@ -74,7 +77,10 @@ LIBS += $(CIRCLEHOME)/addon/wlan/hostap/wpa_supplicant/libwpa_supplicant.a \
         $(CIRCLEHOME)/addon/wlan/libwlan.a
 endif
 endif
+endif
 
+ifeq ($(libopenmpt), on)
+	CPPFLAGS += -DLIBOPENMPT=1
 endif
 
 ### MENU C16/+4 ###
@@ -186,29 +192,19 @@ LIBS += \
 	$(CIRCLEHOME)/lib/sched/libsched.a \
 	$(CIRCLEHOME)/lib/libcircle.a
 
+ifeq ($(libopenmpt), on)
+INCLUDE += -I $(OPENMPT_DIR)/libopenmpt
+LIBS += $(OPENMPT_DIR)/bin/libopenmpt.a
+endif
+
 ifeq ($(net), on)
-INCLUDE += \
-	   -I $(MBEDTLS_DIR)/include \
-	   -I $(OPENMPT_DIR)/libopenmpt
+INCLUDE += -I $(MBEDTLS_DIR)/include
 
 LIBS += \
 	$(CIRCLE_STDLIB_DIR)/src/circle-mbedtls/libcircle-mbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedtls.a \
 	$(MBEDTLS_DIR)/library/libmbedx509.a \
-	$(MBEDTLS_DIR)/library/libmbedcrypto.a \
-	$(OPENMPT_DIR)/bin/libopenmpt.a
-endif
-
-#work in progress, one day we should be able to enable/disable libopenmpt
-#for this the docker builder needs to be changed
-#ifeq ($(kernel), menu)
-#ifeq ($(libopenmpt), on)
-#ifeq ($(net), on)
-#LIBS += $(OPENMPT_DIR)/bin/libopenmpt.a
-#endif
-#endif
-
-ifeq ($(net), on)
+	$(MBEDTLS_DIR)/library/libmbedcrypto.a
 
 CONTENT	= webcontent/index.h webcontent/tuning.h webcontent/style.h webcontent/favicon.h webcontent/sidekick64_logo.h
 

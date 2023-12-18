@@ -38,9 +38,6 @@
 #include <math.h>
 #include "config.h"
 
-#define LIBOPENMPT
-
-
 #ifndef LIBOPENMPT
 #define POCKETMOD_IMPLEMENTATION
 #include "pocketmod.h"
@@ -57,7 +54,7 @@ struct fake_context
     unsigned char num_patterns; /* Patterns in the file (1..128)           */
     unsigned char num_samples;  /* Sample count (15 or 31)                 */
     unsigned char num_channels; /* Channel count (1..32)                   */
-		unsigned char pattern_num_rows;
+    unsigned char pattern_num_rows;
     unsigned char used_num_samples; //hacked in by frntc
     int ticks_per_line;         /* A.K.A. song speed (initially 6)         */
 		int bpm;
