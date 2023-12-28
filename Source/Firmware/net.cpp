@@ -834,6 +834,9 @@ u8 CSidekickNet::getCSDBDownloadLaunchType(){
 	if ( isLibOpenMPTFileType(m_CSDBDownloadExtension) )	
 	{
 		type = 42;
+#ifndef IS264		
+		if (netModPlayOutputHDMI) type ++;
+#endif
 	}
 	else if ( strcmp( m_CSDBDownloadExtension, "crt") == 0 )
 	{

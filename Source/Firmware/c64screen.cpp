@@ -1905,6 +1905,14 @@ void handleC64( int k, u32 *launchKernel, char *FILENAME, char *filenameKernal, 
 		{
 			pSidekickNet->increasePRGLaunchTweakValue();
 		}
+		if ( k == 'h' || k == 'H')
+		{
+			if (pSidekickNet->IsRunning())
+			{
+				netModPlayOutputHDMI = !netModPlayOutputHDMI;
+			}
+		}
+
 	} else
 	if ( menuScreen == MENU_SKTP )
 	{
@@ -2340,6 +2348,7 @@ void printNetworkScreen()
 	CString strModemEmu   = "Modem emulation (M):";
 	CString strModemBaudR = "Baud rate       (B):";
 	CString strPRGLnchTwk = "PRGlaunch tweak (P):";
+	CString strModOutHDMI = "Modplay output  (H):";
 	CString strHelper;
 	
 	if (strcmp(netSidekickHostname,"") != 0)
@@ -2366,11 +2375,17 @@ void printNetworkScreen()
 			strModemEmu.Append( "WiC64-EXP" );
 		else
 			strModemEmu.Append( "None" );
+
+		if ( netModPlayOutputHDMI )
+			strModOutHDMI.Append( "SID+HDMI" );
+		else
+			strModOutHDMI.Append( "SID only" );
 	}
 	else
 	{
 		strConnection.Append( "Inactive" );
 		strModemEmu.Append( "Inactive" );
+		strModOutHDMI.Append( "Inactive" );
 	}
 	
 	if ( pSidekickNet->getModemEmuType() != 3 )
@@ -2388,6 +2403,7 @@ void printNetworkScreen()
 	printC64( x+1, y1+12, strModemEmu,       skinValues.SKIN_MENU_TEXT_SYSINFO, 0 );
 	printC64( x+1, y1+13, strModemBaudR,     skinValues.SKIN_MENU_TEXT_SYSINFO, 0 );
 	printC64( x+1, y1+16, strPRGLnchTwk,     skinValues.SKIN_MENU_TEXT_SYSINFO, 0 );
+	printC64( x+1, y1+17, strModOutHDMI,     skinValues.SKIN_MENU_TEXT_SYSINFO, 0 );
 	
 	if (strcmp(netSktpHostName,"") != 0){
 		unsigned port = netSktpHostPort;
@@ -2399,7 +2415,7 @@ void printNetworkScreen()
 		printC64( x+1, y1+15, tmpHost,   skinValues.SKIN_MENU_TEXT_SYSINFO, 0 );
 	}
 
-	u32 y2=17;
+	u32 y2=18;
 
 	printC64( x+1, y1+y2, "S - Display system information", skinValues.SKIN_MENU_TEXT_HEADER, 0 );
 

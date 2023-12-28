@@ -178,6 +178,7 @@ extern union T_SKIN_VALUES	skinValues;
 	extern u32  netModemEmuDefaultBaudrate;
 	extern boolean netConnectOnBoot;
 	extern boolean netEnableWebserver;
+	extern boolean netModPlayOutputHDMI;
 #endif
 
 #endif

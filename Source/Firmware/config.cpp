@@ -54,6 +54,7 @@ u16	cfgVIC_ScanlineIntensity = 256;
 	u32  netModemEmuDefaultBaudrate = 0;
 	boolean netConnectOnBoot = false;
 	boolean netEnableWebserver = false;
+	boolean netModPlayOutputHDMI = false;
 #endif
 
 u32 skinFontLoaded;
@@ -388,7 +389,16 @@ int readConfig( CLogger *logger, char *DRIVE, char *FILENAME )
 					logger->Write( "RaspiMenu", LogNotice, " modem emu default baudrate >%i<", netModemEmuDefaultBaudrate );
 				#endif
 				}
-				
+
+				if ( strcmp( ptr, "NET_MODPLAY_OUTPUT_HDMI" ) == 0 )
+				{
+					ptr = strtok_r( NULL, "\"", &rest );
+					netModPlayOutputHDMI = (atoi( ptr ) == 1);
+				#ifdef DEBUG_OUT
+					logger->Write( "RaspiMenu", LogNotice, " enable modplay via HDMI  >%i<", netModPlayOutputHDMI );
+				#endif
+				}
+
 #endif
 				
 			}
