@@ -671,7 +671,7 @@ boolean CSidekickNet::Prepare()
 		return false;
 	}	
 	#ifndef WITHOUT_STDLIB
-	CGlueStdioInit (m_FileSystem);
+	//CGlueStdioInit (m_FileSystem);
 	#endif
 	
 	if (m_useWLAN)

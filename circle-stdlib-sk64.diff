@@ -1,0 +1,52 @@
+diff --git a/Makefile b/Makefile
+index 41e5b40..0d3b503 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,10 +11,13 @@ circle:
+ 	$(MAKE) -C libs/circle/addon/SDCard
+ 	$(MAKE) -C libs/circle/addon/fatfs
+ 	$(MAKE) -C libs/circle/addon/qemu
++	$(MAKE) -C libs/circle/addon/vc4/sound
++	$(MAKE) -C libs/circle/addon/vc4/vchiq
++	$(MAKE) -C libs/circle/addon/linux
+ 	cd libs/circle/addon/wlan && ./makeall --nosample
+ 
+ newlib:
+-	CPPFLAGS_FOR_TARGET='$(CPPFLAGS_FOR_TARGET)' \
++	CPPFLAGS_FOR_TARGET='$(CPPFLAGS_FOR_TARGET) -std=c++17' \
+ 	CC_FOR_TARGET='$(CC_FOR_TARGET)' \
+ 	CXX_FOR_TARGET='$(CXX_FOR_TARGET)' \
+ 	GCC_FOR_TARGET='$(GCC_FOR_TARGET)' \
+@@ -40,8 +43,8 @@ clean-stdlib-samples:
+ 	-$(MAKE) -C samples/03-stdio-fatfs clean
+ 	-$(MAKE) -C samples/04-std clean
+ 	-$(MAKE) -C samples/05-smoketest clean
+-	
+-MBEDTLS_INCLUDE = -I../../../include -I../../circle/include
++
++MBEDTLS_INCLUDE = -I../../../include -I../../circle/include -std=c++17
+ MBED_DEFINE = -DMBEDTLS_CONFIG_FILE='<circle-mbedtls/config-circle-mbedtls.h>'
+ 
+ mbedtls:
+@@ -73,6 +76,9 @@ clean: clean-stdlib-samples clean-mbedtls-samples
+ 	-$(MAKE) -C libs/circle/addon/SDCard PREFIX=$(TOOLPREFIX) clean
+ 	-$(MAKE) -C libs/circle/addon/fatfs PREFIX=$(TOOLPREFIX) clean
+ 	-$(MAKE) -C libs/circle/addon/qemu PREFIX=$(TOOLPREFIX) clean
++	-$(MAKE) -C libs/circle/addon/vc4/sound PREFIX=$(TOOLPREFIX) clean
++	-$(MAKE) -C libs/circle/addon/vc4/vchiq PREFIX=$(TOOLPREFIX) clean
++	-$(MAKE) -C libs/circle/addon/linux PREFIX=$(TOOLPREFIX) clean
+ 	-cd libs/circle/addon/wlan && ./makeall --nosample PREFIX=$(TOOLPREFIX) clean
+ 	-$(MAKE) -C $(NEWLIB_BUILD_DIR) clean
+ 	-test -n "$(NEWLIB_INSTALL_DIR)" && rm -rf "$(NEWLIB_INSTALL_DIR)"/*
+diff --git a/configure b/configure
+index 8cc85eb..5436ad9 100755
+--- a/configure
++++ b/configure
+@@ -165,6 +165,7 @@ fi
+     echo "STDLIB_SUPPORT = $STDLIB_SUPPORT"
+     echo "STDDEF_INCPATH = \"$STDDEF_INCPATH\""
+     echo "CFLAGS = -Wno-parentheses $CIRCLE_CFLAGS"
++    echo "STANDARD = -std=c++17"
+     if [ "$OPTIONS" != "" ]
+     then
+         echo "DEFINE += $OPTIONS"

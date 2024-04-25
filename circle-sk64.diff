@@ -1,0 +1,124 @@
+diff --git a/addon/vc4/sound/vchiqsoundbasedevice.cpp b/addon/vc4/sound/vchiqsoundbasedevice.cpp
+index 463b6ae..382bbc3 100644
+--- a/addon/vc4/sound/vchiqsoundbasedevice.cpp
++++ b/addon/vc4/sound/vchiqsoundbasedevice.cpp
+@@ -474,6 +474,7 @@ void CVCHIQSoundBaseDevice::Callback (const VCHI_CALLBACK_REASON_T Reason, void
+ 	vchi_service_release (m_hService);
+ }
+ 
++#if 0
+ void CVCHIQSoundBaseDevice::CallbackStub (void *pParam, const VCHI_CALLBACK_REASON_T Reason,
+ 					  void *hMessage)
+ {
+@@ -482,3 +483,29 @@ void CVCHIQSoundBaseDevice::CallbackStub (void *pParam, const VCHI_CALLBACK_REAS
+ 
+ 	pThis->Callback (Reason, hMessage);
+ }
++#endif
++bool CVCHIQ_CB_Manual = false;
++CVCHIQSoundBaseDevice *CVCHIQ_CB_Device = NULL;
++VCHI_CALLBACK_REASON_T CVCHIQ_CB_Reason;
++void *CVCHIQ_CB_hMessage;
++
++void CVCHIQSoundBaseDevice::CallbackStub (void *pParam, const VCHI_CALLBACK_REASON_T Reason,
++					  void *hMessage)
++{
++	CVCHIQSoundBaseDevice *pThis = (CVCHIQSoundBaseDevice *) pParam;
++	assert (pThis != 0);
++
++	if ( CVCHIQ_CB_Manual && CVCHIQ_CB_Device != NULL )
++	{
++		pThis->Callback (Reason, hMessage);
++		return;
++	}
++
++	if ( CVCHIQ_CB_Manual )
++	{
++		CVCHIQ_CB_Device = pThis;
++		CVCHIQ_CB_Reason = Reason;
++		CVCHIQ_CB_hMessage = hMessage;
++	} else
++		pThis->Callback (Reason, hMessage);
++}
+\ No newline at end of file
+diff --git a/include/circle/sound/hdmisoundbasedevice.h b/include/circle/sound/hdmisoundbasedevice.h
+index 7a31981..ff9cbaf 100644
+--- a/include/circle/sound/hdmisoundbasedevice.h
++++ b/include/circle/sound/hdmisoundbasedevice.h
+@@ -82,6 +82,8 @@ public:
+ 	/// \note Must be called twice for each frame (left/right sample).
+ 	void WriteSample (s32 nSample);
+ 
++	u32 ConvertSample (s32 nSample);
++
+ protected:
+ 	/// \brief May overload this to provide the sound samples!
+ 	/// \param pBuffer	buffer where the samples have to be placed
+diff --git a/lib/interruptgic.cpp b/lib/interruptgic.cpp
+index 6505847..ae55c82 100644
+--- a/lib/interruptgic.cpp
++++ b/lib/interruptgic.cpp
+@@ -199,7 +199,7 @@ void CInterruptSystem::ConnectFIQ (unsigned nFIQ, TFIQHandler *pHandler, void *p
+ {
+ 	assert (nFIQ <= ARM_MAX_FIQ);
+ 	assert (pHandler != 0);
+-	assert (FIQData.pHandler == 0);
++	//assert (FIQData.pHandler == 0);
+ 
+ 	FIQData.pHandler = pHandler;
+ 	FIQData.pParam = pParam;
+diff --git a/lib/sound/hdmisoundbasedevice.cpp b/lib/sound/hdmisoundbasedevice.cpp
+index 26450fe..f950c1c 100644
+--- a/lib/sound/hdmisoundbasedevice.cpp
++++ b/lib/sound/hdmisoundbasedevice.cpp
+@@ -456,6 +456,20 @@ void CHDMISoundBaseDevice::WriteSample (s32 nSample)
+ 	}
+ }
+ 
++u32 CHDMISoundBaseDevice::ConvertSample (s32 nSample)
++{
++	assert (m_bUsePolling);
++
++	u32 retVal = ConvertIEC958Sample (nSample, m_nSubFrame / IEC958_HW_CHANNELS);
++
++	if (++m_nSubFrame == IEC958_SUBFRAMES_PER_BLOCK)
++	{
++		m_nSubFrame = 0;
++	}
++
++	return retVal;
++}
++
+ boolean CHDMISoundBaseDevice::GetNextChunk (void)
+ {
+ 	assert (m_pDMABuffer[m_nNextBuffer] != 0);
+diff --git a/lib/usb/usbserialft231x.cpp b/lib/usb/usbserialft231x.cpp
+index 19f035a..ee5cf70 100644
+--- a/lib/usb/usbserialft231x.cpp
++++ b/lib/usb/usbserialft231x.cpp
+@@ -135,6 +135,25 @@ boolean CUSBSerialFT231XDevice::SetBaudRate (unsigned nBaudRate)
+ 	else if (divisor == 0x4001)
+ 		divisor = 1;
+ 
++	if (pHost->ControlMessage (GetEndpoint0 (),
++				   REQUEST_OUT | REQUEST_VENDOR | REQUEST_TO_DEVICE,
++				   FTDI_SIO_SET_FLOW_CTRL,
++				   0,
++				   (nBaudRate == 9600 ? 0x1 << 8 : 0), //FTDI_SIO_RTS_CTS_HS in case of 9600
++				   0, 0) < 0)
++	{
++		CLogger::Get ()->Write (FromFt231x, LogError, "Cannot modify flow control setting");
++	}
++	else
++	{
++		if ( nBaudRate == 9600)
++			CLogger::Get ()->Write (FromFt231x, LogError, "RTS/CTS flow control enabled for baudrate 9600");
++		else
++			CLogger::Get ()->Write (FromFt231x, LogError, "RTS/CTS flow control disabled for baudrate != 9600");
++		
++	}
++	
++	
+ 	if (pHost->ControlMessage (GetEndpoint0 (),
+ 				   REQUEST_OUT | REQUEST_VENDOR | REQUEST_TO_DEVICE,
+ 				   FTDI_SIO_SET_BAUD_RATE,

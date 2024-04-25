@@ -1,0 +1,17 @@
+RASPPI = 3
+PREFIX = aarch64-none-elf-
+FLOAT_ABI = hard
+STDLIB_SUPPORT = 3
+STDDEF_INCPATH = "/opt/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf/bin/../lib/gcc/aarch64-none-elf/12.2.1/include"
+CFLAGS = -Wno-parentheses 
+STANDARD = -std=c++17
+AARCH = 64
+PREFIX64 = aarch64-none-elf-
+DEFINE += -DARM_ALLOW_MULTI_CORE
+DEFINE += -DKERNEL_MAX_SIZE=0x11000000
+DEFINE += -DREALTIME
+DEFINE += -DNO_BUSY_WAIT
+DEFINE += -DNO_SD_HIGH_SPEED
+DEFINE += -DDEPTH=8
+DEFINE += -DNO_USB_SOF_INTR
+DEFINE += -DUSE_SDHOST
